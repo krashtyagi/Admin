@@ -9,7 +9,7 @@ export function CompactFooter() {
     <footer className="border-t bg-muted/40 py-5 text-sm text-muted-foreground">
       <div className="container mx-auto px-6 flex flex-col items-center justify-center gap-4 md:flex-row md:justify-between">
         <div>
-          Copyright © {currentYear} Hilexa
+          Copyright © {currentYear} trivllo
         </div>
 
         <div className="flex flex-wrap justify-center gap-x-6 gap-y-1">
