@@ -36,6 +36,7 @@ import { Spinner } from "./ui/spinner"
 import { useState, useEffect } from "react"
 import { useQueryClient } from "@tanstack/react-query";
 import { useVariants } from "@/providers/main-provider/variants-provider"
+import { adminAccessToken } from "@/services/auth"
 
 export function NavUser() {
   const router = useRouter()
@@ -126,7 +127,8 @@ export function NavUser() {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => {
-              localStorage.removeItem("accessToken")
+              localStorage.removeItem(adminAccessToken)
+              localStorage.removeItem("status")
               queryClient.clear();
               router.push("/login")
 

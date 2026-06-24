@@ -58,7 +58,6 @@ import {
     XCircle,
 } from "lucide-react";
 
-// Copy Button Component for Contact details
 const CopyButton = ({ value }: { value: string }) => {
     const [copied, setCopied] = React.useState(false);
 
@@ -99,17 +98,15 @@ function RequestPage() {
     const [confirmApproveId, setConfirmApproveId] = React.useState<string | null>(null);
     const [confirmRejectId, setConfirmRejectId] = React.useState<string | null>(null);
 
-    // Debounce search query
     React.useEffect(() => {
         const handler = setTimeout(() => {
             setDebouncedSearch(search);
-            setPage(1); // Reset page on new search
+            setPage(1);
         }, 400);
 
         return () => clearTimeout(handler);
     }, [search]);
 
-    // Fetch Deletion Requests
     const { data, isLoading, isPlaceholderData, refetch, isRefetching } = useQuery({
         queryKey: ["account-delete_requests", debouncedSearch, page, limit],
         queryFn: async () => {
@@ -126,7 +123,6 @@ function RequestPage() {
         staleTime: 1000 * 60 * 5,
     });
 
-    // Approve Mutation
     const approveMutation = useMutation({
         mutationFn: async (userId: string) => {
             const res = await axiosApi.patch(`/admin/account-deactivate/${userId}/approve-delete`);
@@ -141,7 +137,6 @@ function RequestPage() {
         },
     });
 
-    // Reject Mutation
     const rejectMutation = useMutation({
         mutationFn: async (userId: string) => {
             const res = await axiosApi.patch(`/admin/account-deactivate/${userId}/reject-delete`);
@@ -162,11 +157,9 @@ function RequestPage() {
     const startIdx = (pagination.page - 1) * pagination.limit + 1;
     const endIdx = Math.min(pagination.page * pagination.limit, pagination.total);
 
-    // Selected requests for confirmation dialogs
     const selectedApproveRequest = requests.find((r: any) => r._id === confirmApproveId);
     const selectedRejectRequest = requests.find((r: any) => r._id === confirmRejectId);
 
-    // Oldest request dynamic calculation
     const getOldestRequestText = (reqs: any[]) => {
         if (!reqs || reqs.length === 0) return "N/A";
         const dates = reqs
@@ -190,7 +183,6 @@ function RequestPage() {
     return (
         <TooltipProvider>
             <div className="p-1 sm:p-3 md:p-8 max-w-[1600px] mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-300">
-                {/* Header Section */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <h2 className="text-xl md:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-zinc-50">
@@ -212,7 +204,6 @@ function RequestPage() {
                     </Button>
                 </div>
 
-                {/* Stats Cards Dashboard */}
                 <div className="grid gap-3 md:gap-6 grid-cols-2 md:grid-cols-3">
                     <div className="relative overflow-hidden rounded-xl border border-gray-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-4 md:p-6 shadow-sm col-span-2 md:col-span-1">
                         <div className="flex items-center justify-between">
@@ -276,9 +267,7 @@ function RequestPage() {
                     </div>
                 </div>
 
-                {/* Table Section */}
                 <div className="rounded-xl border border-gray-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-sm overflow-hidden">
-                    {/* Controls Header */}
                     <div className="p-3 md:p-5 border-b border-gray-200/80 dark:border-zinc-800 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 md:gap-4 bg-gray-50/50 dark:bg-zinc-900/30">
                         <div className="relative flex-1 sm:max-w-md">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-zinc-500" />
@@ -313,7 +302,6 @@ function RequestPage() {
                         </div>
                     </div>
 
-                    {/* Table Body / Mobile Cards Viewport */}
                     <div>
                         {isLoading ? (
                             <div className="p-12 space-y-4">
@@ -330,7 +318,6 @@ function RequestPage() {
                             </div>
                         ) : requests.length > 0 ? (
                             <>
-                                {/* Mobile Cards View (Visible on small screens) */}
                                 <div className="block md:hidden space-y-4 p-4">
                                     {requests.map((req: any) => {
                                         const isHighActivity = req.totalBookings >= 10;
@@ -344,7 +331,6 @@ function RequestPage() {
                                                 className={`bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl p-4 space-y-4 shadow-sm transition-all ${isPlaceholderData ? "opacity-50" : ""
                                                     }`}
                                             >
-                                                {/* Card Header: Avatar, Name, Status */}
                                                 <div className="flex items-start justify-between gap-3">
                                                     <div className="flex items-center gap-3">
                                                         <Avatar className="h-10 w-10 ring-2 ring-gray-100 dark:ring-zinc-850">
@@ -371,7 +357,6 @@ function RequestPage() {
                                                     </Badge>
                                                 </div>
 
-                                                {/* Card Body: Contact Details */}
                                                 <div className="space-y-2 text-xs text-gray-600 dark:text-zinc-300 bg-gray-50/50 dark:bg-zinc-900/30 p-3 rounded-lg border border-gray-100 dark:border-zinc-900/40">
                                                     <div className="flex items-center justify-between group">
                                                         <div className="flex items-center gap-1.5 min-w-0 mr-2">
@@ -391,7 +376,6 @@ function RequestPage() {
                                                     )}
                                                 </div>
 
-                                                {/* Card Footer: Metadata & Details */}
                                                 <div className="flex justify-between items-center text-xs">
                                                     <div>
                                                         <Badge
@@ -415,7 +399,6 @@ function RequestPage() {
                                                     </div>
                                                 </div>
 
-                                                {/* Reason Callout */}
                                                 {req.deleteRequest?.reason ? (
                                                     <div className="text-xs italic bg-zinc-50 dark:bg-zinc-900/50 text-gray-600 dark:text-zinc-400 p-3 rounded-lg border border-zinc-100 dark:border-zinc-800/40">
                                                         <span className="font-semibold not-italic block text-[10px] text-gray-405 dark:text-zinc-500 uppercase tracking-wider mb-1">Reason:</span>
@@ -427,7 +410,6 @@ function RequestPage() {
                                                     </div>
                                                 )}
 
-                                                {/* Actions */}
                                                 <div className="flex gap-3 pt-2">
                                                     <Button
                                                         variant="outline"
@@ -453,7 +435,6 @@ function RequestPage() {
                                     })}
                                 </div>
 
-                                {/* Desktop Table View (Visible on medium screens and larger) */}
                                 <div className="hidden md:block overflow-x-auto">
                                     <Table>
                                         <TableHeader>
@@ -480,7 +461,6 @@ function RequestPage() {
                                                         className={`border-b border-gray-200/80 dark:border-zinc-800 hover:bg-gray-50/50 dark:hover:bg-zinc-900/30 transition-colors ${isPlaceholderData ? "opacity-50" : ""
                                                             }`}
                                                     >
-                                                        {/* User Info Column */}
                                                         <TableCell className="py-4 pl-6">
                                                             <div className="flex items-center gap-3">
                                                                 <Avatar className="h-10 w-10 ring-2 ring-gray-100 dark:ring-zinc-800">
@@ -501,7 +481,6 @@ function RequestPage() {
                                                             </div>
                                                         </TableCell>
 
-                                                        {/* Contact Details Column */}
                                                         <TableCell className="py-4">
                                                             <div className="flex flex-col gap-1">
                                                                 <div className="flex items-center gap-1.5 group">
@@ -523,7 +502,6 @@ function RequestPage() {
                                                             </div>
                                                         </TableCell>
 
-                                                        {/* Bookings / Activity Column */}
                                                         <TableCell className="py-4">
                                                             <Tooltip>
                                                                 <TooltipTrigger asChild>
@@ -544,7 +522,6 @@ function RequestPage() {
                                                             </Tooltip>
                                                         </TableCell>
 
-                                                        {/* Deletion Reason Column */}
                                                         <TableCell className="py-4 max-w-[240px]">
                                                             {req.deleteRequest?.reason ? (
                                                                 <Tooltip>
@@ -564,8 +541,6 @@ function RequestPage() {
                                                                 </span>
                                                             )}
                                                         </TableCell>
-
-                                                        {/* Status Column */}
                                                         <TableCell className="py-4">
                                                             <div className="flex items-center gap-1.5">
                                                                 <Badge
@@ -577,7 +552,6 @@ function RequestPage() {
                                                             </div>
                                                         </TableCell>
 
-                                                        {/* Requested Date Column */}
                                                         <TableCell className="py-4">
                                                             <div className="flex flex-col gap-0.5">
                                                                 <span className="text-sm font-medium text-gray-800 dark:text-zinc-300">
@@ -597,7 +571,6 @@ function RequestPage() {
                                                             </div>
                                                         </TableCell>
 
-                                                        {/* Actions Column */}
                                                         <TableCell className="py-4 pr-6 text-right">
                                                             <div className="flex justify-end gap-2">
                                                                 <Tooltip>
@@ -661,7 +634,6 @@ function RequestPage() {
                         )}
                     </div>
 
-                    {/* Pagination Controls */}
                     {requests.length > 0 && (
                         <div className="p-3 md:p-5 border-t border-gray-200/80 dark:border-zinc-800 flex flex-col sm:flex-row justify-between items-center gap-3 md:gap-4 bg-gray-50/50 dark:bg-zinc-900/30">
                             <p className="text-xs text-gray-500 dark:text-zinc-400 font-medium">
@@ -707,7 +679,6 @@ function RequestPage() {
                     )}
                 </div>
 
-                {/* Approve Confirmation Dialog */}
                 <AlertDialog open={!!confirmApproveId} onOpenChange={(open) => !open && setConfirmApproveId(null)}>
                     <AlertDialogContent className="dark:bg-zinc-950 dark:border-zinc-800">
                         <AlertDialogHeader>
@@ -743,7 +714,6 @@ function RequestPage() {
                     </AlertDialogContent>
                 </AlertDialog>
 
-                {/* Reject Confirmation Dialog */}
                 <AlertDialog open={!!confirmRejectId} onOpenChange={(open) => !open && setConfirmRejectId(null)}>
                     <AlertDialogContent className="dark:bg-zinc-950 dark:border-zinc-800">
                         <AlertDialogHeader>

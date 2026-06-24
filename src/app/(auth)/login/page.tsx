@@ -7,13 +7,16 @@ import { useRouter } from "next/navigation"
 import { useCurrentUser } from "@/services/queryes"
 import { useAuthStore } from "@/stores/auth.store"
 import { useEffect } from "react"
+import { adminAccessToken } from "@/services/auth"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 export default function LoginPage() {
     const router = useRouter()
     const { data } = useCurrentUser()
     const { draft } = useAuthStore()
+    const ismobile = useIsMobile();
     useEffect(() => {
-        if (data?.data?.role === "vendor" && localStorage.getItem("accessToken") !== null) {
+        if (data?.data?.role === "vendor" && localStorage.getItem(adminAccessToken) !== null) {
             if (draft) {
                 router.push("/signup/process")
             } else {
@@ -25,7 +28,7 @@ export default function LoginPage() {
         <div className="grid min-h-svh lg:grid-cols-2">
             <div className="flex flex-col gap-4 p-6 md:p-5">
                 <div className="flex justify-center gap-2 md:justify-start">
-                    <a
+                    {/* <a
                         href="#"
                         className="group flex items-center gap-2 font-medium transition-all duration-300"
                     >
@@ -42,19 +45,26 @@ export default function LoginPage() {
                         >
 
 
-                            <LOGO
-
-                            />
+                            
 
 
                         </div>
 
 
-                    </a>
+                    </a> */}
+                    {/* {
+                        !ismobile && <LOGO
+
+                        />
+                    } */}
+
                 </div>
 
                 <div className="flex flex-1 items-center justify-center">
                     <div className="w-full max-w-xs">
+                        {<div className="flex justify-center w-full mb-6">
+                            <LOGO />
+                        </div>}
                         <LoginForm />
                     </div>
                 </div>

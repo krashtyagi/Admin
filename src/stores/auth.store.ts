@@ -1,4 +1,5 @@
 import { axiosApi } from "@/lib/axios";
+import { adminAccessToken } from "@/services/auth";
 import { create } from "zustand";
 
 interface User {
@@ -55,6 +56,19 @@ interface AuthStates {
     public_id?: string;
     resource_type?: string;
   }>;
+  forgotPassword: (data: {
+    email: string;
+  }) => Promise<{ success: boolean; message: string }>;
+  verifyForgotPasswordOTP: (data: {
+    email: string;
+    otp: string;
+    endpoint: string;
+  }) => Promise<{ success: boolean; message: string }>;
+  resetPassword: (data: {
+    email: string;
+    otp: string;
+    newPassword: string;
+  }) => Promise<{ success: boolean; message: string }>;
 }
 
 interface Login_signup_Data {
@@ -96,7 +110,15 @@ export const useAuthStore = create<AuthStates>()((set) => ({
       if (res.data.success) {
         set({ currUser: res.data.data.user });
         const token = res.data.accessToken;
-        localStorage.setItem("accessToken", token);
+        localStorage.setItem(adminAccessToken, token);
+
+        const status = res.data.data.vendor?.status || "approved";
+        const currentStep = res.data.data.vendor?.currentStep || 1;
+        localStorage.setItem("status", status);
+        set({
+          draft: ["draft", "pending", "rejected"].includes(status),
+          currStep: currentStep,
+        });
 
         // console.log("asd");
         // console.log(res);
@@ -155,11 +177,20 @@ export const useAuthStore = create<AuthStates>()((set) => ({
       const res = await axiosApi.post("/auth/verify-otp", data);
       if (res.data.success) {
         set({ currUser: res.data.data.user });
+        const token = res.data.accessToken;
+        localStorage.setItem(adminAccessToken, token);
+        const status = res.data.data.vendor?.status || "approved";
+        const currentStep = res.data.data.vendor?.currentStep || 1;
+        localStorage.setItem("status", status);
+        set({
+          draft: ["draft", "pending", "rejected"].includes(status),
+          currStep: currentStep,
+        });
         return {
           success: true,
           message: res.data.message,
-          currentStep: res.data.data.vendor?.currentStep || 0,
-          status: res.data.data.vendor.status,
+          currentStep: currentStep,
+          status: status,
         };
       }
       return {
@@ -244,6 +275,71 @@ export const useAuthStore = create<AuthStates>()((set) => ({
         success: false,
         message: err.response?.data?.message || "Upload failed",
       };
+    }
+  },
+
+  forgotPassword: async (data: { email: string }) => {
+    set({ isSiging: true });
+    try {
+      const res = await axiosApi.post("/auth/forgot-password", data);
+      return { success: res.data.success, message: res.data.message };
+    } catch (error) {
+      const err = error as { response?: { data?: { message?: string } } };
+      return {
+        success: false,
+        message: err.response?.data?.message || "Forgot password failed",
+      };
+    } finally {
+      set({ isSiging: false });
+    }
+  },
+
+  verifyForgotPasswordOTP: async (data: {
+    email: string;
+    otp: string;
+    endpoint: string;
+  }) => {
+    set({ isSiging: true });
+    try {
+      const res = await axiosApi.post(data.endpoint, {
+        email: data.email,
+        otp: data.otp,
+      });
+      if (res.data.success) {
+        return { success: true, message: res.data.message };
+      }
+      return {
+        success: false,
+        message: res.data.message || "Verification failed",
+      };
+    } catch (error) {
+      const err = error as { response?: { data?: { message?: string } } };
+      return {
+        success: false,
+        message: err.response?.data?.message || "Verification failed",
+      };
+    } finally {
+      set({ isSiging: false });
+    }
+  },
+
+  resetPassword: async (data: {
+    email: string;
+    otp: string;
+    newPassword: string;
+  }) => {
+    set({ isSiging: true });
+    try {
+      const res = await axiosApi.patch("/auth/reset-password", data);
+      return { success: res.data.success, message: res.data.message };
+    } catch (error) {
+      const err = error as { response?: { data?: { message?: string } } };
+      return {
+        success: false,
+        message: err.response?.data?.message || "Reset password failed",
+      };
+    } finally {
+      set({ isSiging: false });
     }
   },
 }));
