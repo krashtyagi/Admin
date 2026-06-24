@@ -11,11 +11,13 @@ export interface Property {
   _id: string;
   status: "approved" | "pending" | "rejected";
   submittedAt?: string; // Optional because some entries don't have it
-  propertyName: string;
+  propertyName?: string;
+  businessName?: string;
   city: string;
   vendorName: string;
   rank: string;
   canAssignRank: boolean;
+  serviceType?: string;
 }
 
 export interface PropertyResponse {

@@ -11,12 +11,13 @@ import LogoLoader from "@/components/loaders/logoloader"
 import { useVariants } from "@/providers/main-provider/variants-provider"
 import { ErrorBoundary } from 'react-error-boundary'
 import { CompactFooter } from "@/components/footer/compactfooter"
+import { adminAccessToken } from "@/services/auth"
 export default function Layout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [ok, setOk] = useState(false);
   const { variant } = useVariants()
   useEffect(() => {
-    if (!localStorage.getItem("accessToken")) {
+    if (!localStorage.getItem(adminAccessToken)) {
       router.replace("/login");
     } else {
       setOk(true);

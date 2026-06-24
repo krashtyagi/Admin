@@ -11,7 +11,7 @@ import {
   useReactTable,
   type ColumnDef,
 } from "@tanstack/react-table";
-import { Search, MapPin, Building2, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, MapPin, Building2, Car, Bike, Compass, Tent, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,32 +45,64 @@ const formatDate = (iso?: string) => {
   });
 };
 
+const getServiceIcon = (type?: string) => {
+  switch (type?.toLowerCase()) {
+    case "cab":
+      return <Car className="h-5 w-5 text-primary" />;
+    case "bike":
+      return <Bike className="h-5 w-5 text-primary" />;
+    case "tour":
+      return <Compass className="h-5 w-5 text-primary" />;
+    case "adventure":
+      return <Tent className="h-5 w-5 text-primary" />;
+    case "hotel":
+    default:
+      return <Building2 className="h-5 w-5 text-primary" />;
+  }
+};
+
 // --- Column Definitions ---
 export const columns: ColumnDef<Property>[] = [
   {
-    id: "property",
-    header: "Property Name",
-    accessorFn: (row) => `${row.propertyName} ${row.city}`,
+    id: "vendorname",
+    header: "Vendor Name",
+    accessorFn: (row) => `${row.businessName || row.propertyName || ""} ${row.city || ""} ${row.vendorName || ""} ${row.serviceType || ""}`,
     cell: ({ row }) => {
       const router = useRouter();
+      const name = row.original.vendorName || row.original.propertyName || "Unnamed Property";
       return (
-        <div 
+        <div
           className="flex items-center gap-3 cursor-pointer hover:opacity-85 transition-opacity"
           onClick={() => RouterPush(router, `/properties/${row.original._id}`)}
         >
           <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-            <Building2 className="h-5 w-5 text-primary" />
+            {getServiceIcon(row.original.serviceType)}
           </div>
           <div className="flex flex-col">
             <span className="font-bold text-sm leading-none mb-1 text-foreground">
-              {row.original.propertyName}
+              {name}
             </span>
             <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
               <MapPin className="h-3 w-3" />
-              {row.original.city}
+              {row.original.businessName}
             </div>
           </div>
         </div>
+      );
+    },
+  },
+  {
+    accessorKey: "serviceType",
+    header: "Category",
+    cell: ({ row }) => {
+      const type = row.getValue("serviceType") as string;
+      return (
+        <Badge
+          variant="secondary"
+          className="capitalize text-[10px] font-semibold bg-primary/5 text-primary border-primary/10"
+        >
+          {type || "Hotel"}
+        </Badge>
       );
     },
   },
@@ -102,24 +134,24 @@ export const columns: ColumnDef<Property>[] = [
       );
     },
   },
-  {
-    accessorKey: "rank",
-    header: "Rank",
-    cell: ({ row }) => {
-      const rank = row.getValue("rank") as string;
-      const canAssign = row.original.canAssignRank;
-      return (
-        <div className="flex items-center gap-2">
-          <Badge className="bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-black h-7 w-7 flex items-center justify-center p-0 rounded-md">
-            {rank}
-          </Badge>
-          {!canAssign && (
-            <span className="text-[9px] text-muted-foreground font-medium italic">Fixed</span>
-          )}
-        </div>
-      );
-    },
-  },
+  // {
+  //   accessorKey: "rank",
+  //   header: "Rank",
+  //   cell: ({ row }) => {
+  //     const rank = row.getValue("rank") as string;
+  //     const canAssign = row.original.canAssignRank;
+  //     return (
+  //       <div className="flex items-center gap-2">
+  //         <Badge className="bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-black h-7 w-7 flex items-center justify-center p-0 rounded-md">
+  //           {rank}
+  //         </Badge>
+  //         {!canAssign && (
+  //           <span className="text-[9px] text-muted-foreground font-medium italic">Fixed</span>
+  //         )}
+  //       </div>
+  //     );
+  //   },
+  // },
   {
     id: "actions",
     header: () => <span className="text-right block pr-2">Manage</span>,
@@ -178,8 +210,8 @@ export function PropertiesDataTable({ properties }: { properties: Property[] }) 
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search property or city..."
-              value={(table.getColumn("property")?.getFilterValue() as string) ?? ""}
-              onChange={(e) => table.getColumn("property")?.setFilterValue(e.target.value)}
+              value={(table.getColumn("vendorname")?.getFilterValue() as string) ?? ""}
+              onChange={(e) => table.getColumn("vendorname")?.setFilterValue(e.target.value)}
               className="pl-10 w-full bg-background h-10 rounded-lg border-gray-200 dark:border-zinc-800 dark:bg-zinc-950"
             />
           </div>

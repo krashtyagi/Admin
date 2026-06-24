@@ -96,7 +96,7 @@ const PropertyDetail = () => {
                             <div>
                               <p className="text-xs font-bold truncate max-w-[140px]">{doc.docName || "Document"}</p>
                               <ImagePreview src={doc.docUrl}>
-                                <button className="text-[10px] text-primary hover:underline font-bold text-left cursor-zoom-in">View File</button>
+                                <button className="text-[10px] text-primary hover:underline font-bold text-left cursor-pointer">View File</button>
                               </ImagePreview>
                             </div>
                           </div>
@@ -150,7 +150,7 @@ const PropertyDetail = () => {
                       {bankDetails.proof?.url && (
                         <div className="col-span-2">
                           <ImagePreview src={bankDetails.proof.url}>
-                            <button className="inline-flex items-center gap-2 py-2 px-3 border border-dashed border-border rounded-xl text-[10px] font-bold hover:bg-primary/5 transition-all cursor-zoom-in">
+                            <button className="inline-flex items-center gap-2 py-2 px-3 border border-dashed border-border rounded-xl text-[10px] font-bold hover:bg-primary/5 transition-all cursor-pointer">
                               <ExternalLink size={12} /> View Bank Proof
                             </button>
                           </ImagePreview>
@@ -203,7 +203,7 @@ const PropertyDetail = () => {
                           <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                             {propertyDetails.images.map((img: any, i: number) => (
                               <ImagePreview key={i} src={img.url || img}>
-                                <div className="aspect-square rounded-lg overflow-hidden border border-border cursor-zoom-in group">
+                                <div className="aspect-square rounded-lg overflow-hidden border border-border cursor-pointer group">
                                   <img src={img.url || img} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
                                 </div>
                               </ImagePreview>
@@ -246,7 +246,7 @@ const PropertyDetail = () => {
                                   <div>
                                     <p className="text-xs font-bold truncate max-w-[140px]">{doc.docName || "Document"}</p>
                                     <ImagePreview src={doc.docUrl}>
-                                      <button className="text-[10px] text-primary hover:underline font-bold text-left cursor-zoom-in">View File</button>
+                                      <button className="text-[10px] text-primary hover:underline font-bold text-left cursor-pointer">View File</button>
                                     </ImagePreview>
                                   </div>
                                 </div>

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useCurrentUser } from "@/services/queryes";
 import { useAuthStore } from "@/stores/auth.store";
 import { PageSkeleton } from "@/components/loaders/loader/skeleton";
+import { adminAccessToken } from "@/services/auth";
 
 export default function Home() {
   const { data, isLoading } = useCurrentUser();
@@ -20,7 +21,7 @@ export default function Home() {
       } else {
         router.replace("/dashboard")
       }
-    } else if (localStorage.getItem("accessToken") === null) {
+    } else if (localStorage.getItem(adminAccessToken) === null) {
       router.replace("/login")
     }
   }, [data])

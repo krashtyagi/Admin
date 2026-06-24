@@ -54,11 +54,10 @@ const UserActionsCell = ({ user }: { user: User }) => {
     <Button
       variant={user.isActive ? "destructive" : "outline"}
       size="sm"
-      className={`h-8 px-3 text-xs font-semibold transition-all ${
-        !user.isActive 
-          ? "border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-700 hover:border-emerald-500" 
+      className={`h-8 px-3 text-xs font-semibold transition-all ${!user.isActive
+          ? "border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-700 hover:border-emerald-500"
           : ""
-      }`}
+        }`}
       disabled={isPending}
       onClick={handleToggle}
     >
@@ -105,10 +104,10 @@ export const columns: ColumnDef<User>[] = [
               </TooltipTrigger>
               <TooltipContent side="right" className="p-1 border-border bg-popover">
                 <div className="relative h-[100px] w-[100px] overflow-hidden rounded-md">
-                   {/* Big Preview Image */}
-                  <img 
-                    src={user.avatar || "/placeholder-user.jpg"} 
-                    alt="Preview" 
+                  {/* Big Preview Image */}
+                  <img
+                    src={user.avatar || "/placeholder-user.jpg"}
+                    alt="Preview"
                     className="h-full w-full object-cover"
                   />
                 </div>
@@ -116,8 +115,8 @@ export const columns: ColumnDef<User>[] = [
             </Tooltip>
           </TooltipProvider>
 
-          <div 
-            className="flex flex-col cursor-pointer hover:underline decoration-primary/30" 
+          <div
+            className="flex flex-col cursor-pointer hover:underline decoration-primary/30"
             onClick={() => RouterPush(router, `users/${user._id}`)}
           >
             <span className="font-medium text-foreground text-sm leading-none mb-1">
@@ -164,13 +163,12 @@ export const columns: ColumnDef<User>[] = [
     cell: ({ row }) => {
       const isActive = row.getValue("isActive") as boolean;
       return (
-        <Badge 
-          variant="outline" 
-          className={`capitalize font-medium ${
-            isActive 
-            ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" 
-            : "bg-muted text-muted-foreground"
-          }`}
+        <Badge
+          variant="outline"
+          className={`capitalize font-medium ${isActive
+              ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+              : "bg-muted text-muted-foreground"
+            }`}
         >
           {isActive ? "Active" : "Inactive"}
         </Badge>
@@ -223,10 +221,10 @@ export function UsersDataTable({ users }: { users: User[] }) {
               className="pl-9 w-full sm:w-[260px] bg-background border-input h-9"
             />
           </div>
-          <Button variant="outline" size="sm" className="h-9 gap-2">
+          {/* <Button variant="outline" size="sm" className="h-9 gap-2">
             <Filter className="h-3.5 w-3.5" />
             Filter
-          </Button>
+          </Button> */}
         </div>
       </div>
 
