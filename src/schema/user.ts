@@ -14,6 +14,7 @@ export const LoginScshema = z.object({
   //   "password should contain only alphabets and numbers",
   // ),
 });
+
 export type LoginFormProps = z.infer<typeof LoginScshema>;
 
 export const ResetPasswordSchema = z.object({
