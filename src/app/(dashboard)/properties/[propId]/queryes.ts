@@ -7,6 +7,8 @@ import {
   markIssue,
   verifySection,
   updateBusinessRank,
+  assignPromotion,
+  getPropertyListings,
 } from "./dash.service";
 
 export const usePropertyDetails = (id: string) => {
@@ -76,5 +78,35 @@ export const useUpdateBusinessRank = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["property"] });
     },
+  });
+};
+
+export const useAssignPromotion = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: {
+      vendorId: string;
+      serviceType: string;
+      serviceId: string;
+      rank: string;
+      startDate?: string | Date;
+      endDate?: string | Date;
+    }) => assignPromotion(data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["admin_property_details", variables.vendorId] });
+      queryClient.invalidateQueries({ queryKey: ["property"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-promotions"] });
+    },
+  });
+};
+
+export const usePropertyListings = (vendorId: string) => {
+  return useQuery({
+    queryKey: ["admin_property_listings", vendorId],
+    queryFn: () => getPropertyListings(vendorId),
+    enabled: !!vendorId,
+    staleTime: 300000,
+    refetchOnWindowFocus: false,
+    retry: false,
   });
 };

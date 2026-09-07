@@ -33,3 +33,23 @@ export const updateBusinessRank = (businessId: string, serviceType: string, rank
     .patch(`/admin/property/${businessId}/rank`, { serviceType, rank })
     .then((res) => res.data);
 };
+
+export const assignPromotion = (data: {
+  vendorId: string;
+  serviceType: string;
+  serviceId: string;
+  rank: string;
+  startDate?: string | Date;
+  endDate?: string | Date;
+}) => {
+  return axiosApi
+    .post(`/admin/promotions/assign`, data)
+    .then((res) => res.data);
+};
+
+export const getPropertyListings = (vendorId: string) => {
+  return axiosApi
+    .get(`/admin/property/${vendorId}/listings`)
+    .then((res) => res.data);
+};
+
