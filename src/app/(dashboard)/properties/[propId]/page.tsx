@@ -3,13 +3,19 @@ import React, { Suspense, useState } from 'react';
 import {
   Building2, MapPin, CreditCard, ShieldAlert, ShieldCheck,
   CheckCircle2, Wifi, ImageIcon, Landmark, FileCheck, ExternalLink,
-  AlertTriangle, MessageSquare, Loader2
+  AlertTriangle, MessageSquare, Loader2, Crown, Sparkles, Award,
+  Calendar as CalendarIcon, ArrowRight, BedDouble, Package
 } from 'lucide-react';
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 import {
   usePropertyDetails, useApproveProperty, useRejectProperty,
-  useMarkIssue, useVerifySection
+  useMarkIssue, useVerifySection, useAssignPromotion
 } from './queryes';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format, addDays } from 'date-fns';
+import type { DateRange } from 'react-day-picker';
 import { WarningDialog } from '@/components/overlay/warnings';
 import { toast } from 'sonner';
 import { ErrorBoundary } from 'react-error-boundary';
@@ -39,7 +45,7 @@ const PropertyDetail = () => {
 
   if (isLoading || !vendorData) return <PageSkeleton />;
 
-  const { vendor, user, businessDetails, documents, bankDetails, propertyDetails } = vendorData;
+  const { vendor, user, businessDetails, documents, bankDetails, propertyDetails, promotion, businessId } = vendorData;
 
   return (
     <ErrorBoundary fallback={<MessageModal title="Error" description="Something went wrong" />}>
@@ -264,6 +270,18 @@ const PropertyDetail = () => {
 
                 {/* Final Approve / Full Reject */}
                 <FinalActionCard vendor={vendor} id={id} />
+
+                {/* Priority Rank & Promotion Section (Available when vendor is confirmed / approved) */}
+                {vendor?.status === 'approved' && (
+                  <PropertyPromotionCard
+                    vendor={vendor}
+                    id={id}
+                    serviceType={vendor?.serviceType || 'hotel'}
+                    serviceId={businessId || propertyDetails?._id || propertyDetails?.id}
+                    propertyDetails={propertyDetails}
+                    promotion={promotion}
+                  />
+                )}
               </div>
 
               {/* Sidebar */}
@@ -312,6 +330,40 @@ const PropertyDetail = () => {
                     {businessDetails?.country && <div className="flex justify-between"><span className="text-muted-foreground">Country</span><span className="font-medium">{businessDetails.country}</span></div>}
                   </div>
                 </div>
+
+                {/* View Rooms / Tour Packages Button */}
+                {vendor?.status === 'approved' && (vendor?.serviceType === 'hotel' || vendor?.serviceType === 'tour') ? (
+                  <Link href={`/properties/${id}/listings`} className="block">
+                    <div className="rounded-2xl p-4 shadow-sm border border-border hover:border-primary/30 hover:shadow-md transition-all cursor-pointer group">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                            vendor?.serviceType === 'hotel'
+                              ? 'bg-blue-500/10 text-blue-600'
+                              : 'bg-indigo-500/10 text-indigo-600'
+                          }`}>
+                            {vendor?.serviceType === 'hotel' ? <BedDouble size={18} /> : <Package size={18} />}
+                          </div>
+                          <div>
+                            <h3 className="text-xs font-bold uppercase">
+                              {vendor?.serviceType === 'hotel' ? 'View Rooms' : 'View Tour Packages'}
+                            </h3>
+                            <p className="text-[10px] text-muted-foreground">
+                              See vendor-added {vendor?.serviceType === 'hotel' ? 'room types' : 'tour packages'}
+                            </p>
+                          </div>
+                        </div>
+                        <ArrowRight size={16} className="text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                      </div>
+                    </div>
+                  </Link>
+                ) : vendor?.status === 'approved' ? (
+                  <div className="rounded-2xl p-4 shadow-sm border border-dashed border-border">
+                    <p className="text-[11px] text-muted-foreground text-center italic">
+                      No rooms/packages available for this service type
+                    </p>
+                  </div>
+                ) : null}
 
                 {/* Rejection Summary */}
                 {vendor?.rejectedSteps?.length > 0 && (
@@ -538,6 +590,296 @@ function StatusBadge({ status }: { status?: string }) {
     <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${styles[status || ''] || styles.pending}`}>
       {status?.replace(/_/g, ' ') || "pending"}
     </span>
+  );
+}
+
+// ─── Property Promotion & Rank Assignment Card ────────────────────────────
+function PropertyPromotionCard({
+  vendor,
+  id,
+  serviceType,
+  serviceId,
+  propertyDetails,
+  promotion,
+}: {
+  vendor: any;
+  id: string;
+  serviceType: string;
+  serviceId: string;
+  propertyDetails: any;
+  promotion: any;
+}) {
+  const assignPromotionMutation = useAssignPromotion();
+  const [isOpen, setIsOpen] = useState(false);
+  const currentRank = propertyDetails?.rank || promotion?.rank || "";
+  const [selectedRank, setSelectedRank] = useState<string>(currentRank || "A");
+  
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
+    const today = new Date();
+    if (promotion?.startDate && promotion?.endDate) {
+      return {
+        from: new Date(promotion.startDate),
+        to: new Date(promotion.endDate),
+      };
+    }
+    return {
+      from: today,
+      to: addDays(today, 30),
+    };
+  });
+
+  const handleApplyRank = async () => {
+    if (!selectedRank) {
+      toast.error("Please select a rank tier");
+      return;
+    }
+    const targetServiceId = serviceId || propertyDetails?._id || propertyDetails?.id;
+    if (!targetServiceId) {
+      toast.error("Service listing ID not found");
+      return;
+    }
+
+    try {
+      await assignPromotionMutation.mutateAsync({
+        vendorId: id,
+        serviceType: serviceType || vendor?.serviceType || "hotel",
+        serviceId: targetServiceId,
+        rank: selectedRank,
+        startDate: dateRange?.from || new Date(),
+        endDate: dateRange?.to,
+      });
+      toast.success(`Successfully assigned Rank ${selectedRank} to property!`);
+      setIsOpen(false);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to assign rank");
+    }
+  };
+
+  const rankTierStyles: Record<string, { bg: string; text: string; border: string; label: string; desc: string; icon: any }> = {
+    A: {
+      bg: "bg-amber-500/10 dark:bg-amber-950/30",
+      text: "text-amber-600 dark:text-amber-400",
+      border: "border-amber-500/30",
+      label: "Category A — Top Priority",
+      desc: "Top placement across search, categories & recommendations",
+      icon: Crown,
+    },
+    B: {
+      bg: "bg-blue-500/10 dark:bg-blue-950/30",
+      text: "text-blue-600 dark:text-blue-400",
+      border: "border-blue-500/30",
+      label: "Category B — High Priority",
+      desc: "Elevated listing rank over standard properties",
+      icon: Sparkles,
+    },
+    C: {
+      bg: "bg-zinc-500/10 dark:bg-zinc-800/40",
+      text: "text-zinc-600 dark:text-zinc-300",
+      border: "border-zinc-500/30",
+      label: "Category C — Standard Tier",
+      desc: "Standard verified baseline visibility",
+      icon: Award,
+    },
+  };
+
+  const activeStyle = rankTierStyles[currentRank] || rankTierStyles["C"];
+  const ActiveIcon = activeStyle.icon;
+
+  return (
+    <div className="rounded-2xl p-4 md:p-5 space-y-4 border border-border bg-card shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600">
+            <Crown size={18} />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold tracking-tight">Property Promotion & Priority Rank</h3>
+            <p className="text-[11px] text-muted-foreground">Assign ranking category (A, B, C) and promotion duration</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {currentRank ? (
+            <Badge variant="outline" className={`gap-1.5 px-3 py-1 font-bold text-xs ${activeStyle.bg} ${activeStyle.text} ${activeStyle.border}`}>
+              <ActiveIcon className="w-3.5 h-3.5" />
+              Rank {currentRank}
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="text-xs text-muted-foreground">Unranked</Badge>
+          )}
+
+          <Button
+            size="sm"
+            variant={isOpen ? "outline" : "default"}
+            onClick={() => setIsOpen(!isOpen)}
+            className="text-xs font-semibold gap-1.5"
+          >
+            {isOpen ? "Close" : currentRank ? "Change Rank / Duration" : "Assign Rank"}
+          </Button>
+        </div>
+      </div>
+
+      {/* Current Active Promotion Summary */}
+      {currentRank && !isOpen && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-muted/30 rounded-xl border border-border/60 text-xs">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-foreground">Current Ranking:</span>
+            <span className={`font-bold ${activeStyle.text}`}>{activeStyle.label}</span>
+          </div>
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <CalendarIcon size={14} className="text-primary" />
+            <span>
+              Duration:{" "}
+              {promotion?.startDate
+                ? `${format(new Date(promotion.startDate), "dd MMM yyyy")} ${
+                    promotion.endDate ? `→ ${format(new Date(promotion.endDate), "dd MMM yyyy")}` : "(Ongoing)"
+                  }`
+                : "Active"}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Assign Rank Panel */}
+      {isOpen && (
+        <div className="space-y-4 pt-1 animate-in fade-in-50 duration-200">
+          <div>
+            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">
+              Select Promotion Category
+            </label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {(["A", "B", "C"] as const).map((r) => {
+                const conf = rankTierStyles[r];
+                const Icon = conf.icon;
+                const isSelected = selectedRank === r;
+                return (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setSelectedRank(r)}
+                    className={`p-3.5 rounded-xl border-2 text-left transition-all flex flex-col justify-between gap-2 cursor-pointer ${
+                      isSelected
+                        ? "border-primary bg-primary/5 shadow-sm"
+                        : "border-border hover:border-border/80 hover:bg-muted/30"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className={`p-1.5 rounded-lg ${conf.bg} ${conf.text}`}>
+                          <Icon size={16} />
+                        </div>
+                        <span className="font-extrabold text-base text-foreground">Rank {r}</span>
+                      </div>
+                      {isSelected && (
+                        <CheckCircle2 size={16} className="text-primary" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-foreground/90">{conf.label}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug">{conf.desc}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Date Range Picker with Shadcn Range Calendar */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
+              Promotion Duration (From Today To)
+            </label>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full sm:w-[300px] justify-start text-left font-normal text-xs h-10 gap-2 border-border"
+                  >
+                    <CalendarIcon className="h-4 w-4 text-primary" />
+                    {dateRange?.from ? (
+                      dateRange.to ? (
+                        <span>
+                          {format(dateRange.from, "LLL dd, y")} – {format(dateRange.to, "LLL dd, y")}
+                        </span>
+                      ) : (
+                        <span>From {format(dateRange.from, "LLL dd, y")}</span>
+                      )
+                    ) : (
+                      <span className="text-muted-foreground">Pick a date range</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 z-50 bg-background border border-border shadow-xl rounded-2xl" align="start">
+                  <Calendar
+                    mode="range"
+                    defaultMonth={dateRange?.from || new Date()}
+                    selected={dateRange}
+                    onSelect={setDateRange}
+                    numberOfMonths={2}
+                    disabled={(date) => {
+                      const yesterday = new Date();
+                      yesterday.setHours(0, 0, 0, 0);
+                      return date < yesterday;
+                    }}
+                  />
+                </PopoverContent>
+              </Popover>
+
+              {/* Quick Presets */}
+              <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                {[
+                  { label: "7 Days", days: 7 },
+                  { label: "15 Days", days: 15 },
+                  { label: "30 Days", days: 30 },
+                  { label: "90 Days", days: 90 },
+                ].map((preset) => (
+                  <Button
+                    key={preset.days}
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="h-8 text-[11px] px-2.5 rounded-lg"
+                    onClick={() => {
+                      const today = new Date();
+                      setDateRange({ from: today, to: addDays(today, preset.days) });
+                    }}
+                  >
+                    +{preset.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setIsOpen(false)}
+              className="text-xs"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              disabled={assignPromotionMutation.isPending || !selectedRank}
+              onClick={handleApplyRank}
+              className="text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 shadow-sm"
+            >
+              {assignPromotionMutation.isPending ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <CheckCircle2 className="h-3.5 w-3.5" />
+              )}
+              Confirm & Apply Rank {selectedRank}
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
