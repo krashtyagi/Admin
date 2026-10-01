@@ -9,6 +9,12 @@ import {
   updateBusinessRank,
   assignPromotion,
   getPropertyListings,
+  blockProperty,
+  unblockProperty,
+  deleteProperty,
+  getDeletedProperties,
+  cleanAllDeletedProperties,
+  deleteDeletedPropertyRecord,
 } from "./dash.service";
 
 export const usePropertyDetails = (id: string) => {
@@ -110,3 +116,73 @@ export const usePropertyListings = (vendorId: string) => {
     retry: false,
   });
 };
+
+export const useBlockProperty = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason?: string }) =>
+      blockProperty(id, reason),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ["admin_property_details", id] });
+      queryClient.invalidateQueries({ queryKey: ["property"] });
+    },
+  });
+};
+
+export const useUnblockProperty = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => unblockProperty(id),
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ["admin_property_details", id] });
+      queryClient.invalidateQueries({ queryKey: ["property"] });
+    },
+  });
+};
+
+export const useDeleteProperty = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: string | { id: string; reason?: string }) => {
+      const propertyId = typeof data === "string" ? data : data.id;
+      const deleteReason = typeof data === "string" ? undefined : data.reason;
+      return deleteProperty(propertyId, deleteReason);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["property"] });
+      queryClient.invalidateQueries({ queryKey: ["deleted_properties"] });
+    },
+  });
+};
+
+export const useDeletedProperties = (params?: any) => {
+  return useQuery({
+    queryKey: ["deleted_properties", params],
+    queryFn: () => getDeletedProperties(params),
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+};
+
+export const useCleanAllDeletedProperties = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => cleanAllDeletedProperties(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["deleted_properties"] });
+    },
+  });
+};
+
+export const useDeleteDeletedPropertyRecord = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteDeletedPropertyRecord(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["deleted_properties"] });
+    },
+  });
+};
+
+

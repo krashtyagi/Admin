@@ -53,3 +53,41 @@ export const getPropertyListings = (vendorId: string) => {
     .then((res) => res.data);
 };
 
+export const blockProperty = (id: string, reason?: string) => {
+  return axiosApi
+    .patch(`/admin/property/${id}/block`, { reason })
+    .then((res) => res.data);
+};
+
+export const unblockProperty = (id: string) => {
+  return axiosApi
+    .patch(`/admin/property/${id}/unblock`)
+    .then((res) => res.data);
+};
+
+export const deleteProperty = (id: string, reason?: string) => {
+  return axiosApi
+    .delete(`/admin/property/${id}`, { data: { reason } })
+    .then((res) => res.data);
+};
+
+export const getDeletedProperties = (params?: any) => {
+  return axiosApi
+    .get(`/admin/property/deleted`, { params })
+    .then((res) => res.data);
+};
+
+export const cleanAllDeletedProperties = () => {
+  return axiosApi
+    .delete(`/admin/property/deleted/clean-all`)
+    .then((res) => res.data);
+};
+
+export const deleteDeletedPropertyRecord = (id: string) => {
+  return axiosApi
+    .delete(`/admin/property/deleted/${id}`)
+    .then((res) => res.data);
+};
+
+
+
