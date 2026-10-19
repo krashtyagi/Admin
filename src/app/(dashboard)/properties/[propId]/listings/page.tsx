@@ -5,18 +5,20 @@ import {
   Clock, Tag, Sparkles, Package, ImageIcon, Hotel,
   Mountain, ChevronRight, Loader2, AlertCircle
 } from 'lucide-react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { usePropertyListings } from '../queryes';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ImagePreview } from '@/components/ui/image-preview';
 
 // ─── Main Page ─────────────────────────────────────────────────────────────
-const PropertyListingsPage = () => {
+const PropertyListingsContent = () => {
   const { propId } = useParams();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const id = Array.isArray(propId) ? propId[0] : propId || "";
-  const { data, isLoading, isError } = usePropertyListings(id);
+  const propertyId = searchParams.get('propertyId') || undefined;
+  const { data, isLoading, isError } = usePropertyListings(id, propertyId);
   const listingsData = (data as any)?.data;
 
   if (isLoading) return <ListingSkeleton />;
@@ -440,4 +442,10 @@ function ListingSkeleton() {
   );
 }
 
-export default PropertyListingsPage;
+export default function PropertyListingsPage() {
+  return (
+    <React.Suspense fallback={<ListingSkeleton />}>
+      <PropertyListingsContent />
+    </React.Suspense>
+  );
+}

@@ -14,7 +14,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { LayoutDashboardIcon, ListIcon, ChartBarIcon, FolderIcon, UsersIcon, CameraIcon, FileTextIcon, Settings2Icon, CircleHelpIcon, SearchIcon, DatabaseIcon, FileChartColumnIcon, FileIcon, CommandIcon, Home, CalendarHeartIcon, DollarSignIcon, Tag, Star, IndianRupee } from "lucide-react"
+import { LayoutDashboardIcon, ListIcon, ChartBarIcon, FolderIcon, UsersIcon, CameraIcon, FileTextIcon, Settings2Icon, CircleHelpIcon, SearchIcon, DatabaseIcon, FileChartColumnIcon, FileIcon, CommandIcon, Home, CalendarHeartIcon, DollarSignIcon, Tag, Star, IndianRupee, Building2 } from "lucide-react"
 import LOGO from "./logo/logo"
 import { usePathname, useRouter } from "next/navigation"
 import { InstallPrompt } from "./pwa"
@@ -47,6 +47,14 @@ const data = {
       url: "/properties",
       icon: (
         <Home
+        />
+      ),
+    },
+    {
+      title: "New Properties",
+      url: "/new-properties",
+      icon: (
+        <Building2
         />
       ),
     },
