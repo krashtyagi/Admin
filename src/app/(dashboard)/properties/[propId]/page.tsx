@@ -25,13 +25,19 @@ import {
   Ban,
   Unlock,
   Trash2,
+  Clock,
+  Check,
+  AlertCircle,
+  X,
 } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   usePropertyDetails,
   useApproveProperty,
   useRejectProperty,
+  useApproveAdditionalProperty,
+  useRejectAdditionalProperty,
   useMarkIssue,
   useVerifySection,
   useAssignPromotion,
@@ -99,10 +105,205 @@ export const formatAddress = (addr: any): string => {
   return "";
 };
 
-const PropertyDetail = () => {
+// ─── Pending Hotel Approval Card ──────────────────────────────────────────
+function PendingHotelApprovalCard({
+  propertyDetails,
+  vendor,
+  user,
+  businessDetails,
+  bankDetails,
+}: {
+  propertyDetails: any;
+  vendor: any;
+  user: any;
+  businessDetails: any;
+  bankDetails: any;
+}) {
+  const [rejectOpen, setRejectOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const approveMutation = useApproveAdditionalProperty();
+  const rejectMutation = useRejectAdditionalProperty();
+
+  const handleApprove = async () => {
+    try {
+      await approveMutation.mutateAsync({
+        id: propertyDetails._id,
+        serviceType: vendor?.serviceType || "hotel",
+      });
+      toast.success("Hotel approved successfully! Now live on Trivllo.");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to approve hotel");
+    }
+  };
+
+  const handleReject = async () => {
+    if (!reason.trim()) {
+      toast.error("Please provide a rejection reason");
+      return;
+    }
+    try {
+      await rejectMutation.mutateAsync({
+        id: propertyDetails._id,
+        serviceType: vendor?.serviceType || "hotel",
+        reason: reason.trim(),
+      });
+      toast.success("Hotel rejected");
+      setRejectOpen(false);
+      setReason("");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to reject hotel");
+    }
+  };
+
+  return (
+    <div className="rounded-2xl border-2 border-amber-500/40 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent p-4 sm:p-5 space-y-4 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-600 flex items-center justify-center shrink-0">
+            <Clock className="w-5 h-5 animate-pulse" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm md:text-base font-bold text-foreground">
+                Property Awaiting Admin Approval
+              </h2>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/30">
+                Action Required
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Review hotel details and vendor credentials below, then approve or reject this submission.
+            </p>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => setRejectOpen(true)}
+            disabled={approveMutation.isPending || rejectMutation.isPending}
+            className="h-9 px-4 rounded-xl border border-red-500/30 text-red-600 hover:bg-red-500/10 text-xs font-bold transition-all disabled:opacity-50 cursor-pointer"
+          >
+            Reject Hotel
+          </button>
+          <button
+            type="button"
+            onClick={handleApprove}
+            disabled={approveMutation.isPending || rejectMutation.isPending}
+            className="h-9 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+          >
+            {approveMutation.isPending ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Check className="w-3.5 h-3.5" />
+            )}
+            Approve Hotel
+          </button>
+        </div>
+      </div>
+
+      {/* Mention Vendor Approved Details */}
+      <div className="p-3.5 rounded-xl bg-background/80 border border-border/80 space-y-2">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+            Vendor Approved Credentials
+          </span>
+          <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+            Account Status: {vendor?.status?.toUpperCase() || "APPROVED"}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+          <div className="p-2.5 rounded-lg bg-muted/40 border border-border/60">
+            <p className="text-[10px] font-medium text-muted-foreground">Owner & Business</p>
+            <p className="text-xs font-bold text-foreground truncate mt-0.5">
+              {businessDetails?.businessName || "N/A"}
+            </p>
+            <p className="text-[11px] text-muted-foreground truncate">
+              {user?.name} ({user?.email})
+            </p>
+          </div>
+
+          <div className="p-2.5 rounded-lg bg-muted/40 border border-border/60">
+            <p className="text-[10px] font-medium text-muted-foreground">KYC Documents</p>
+            <p className="text-xs font-bold text-emerald-600 flex items-center gap-1 mt-0.5">
+              <CheckCircle2 size={12} /> Verified
+            </p>
+            <p className="text-[11px] text-muted-foreground font-mono">
+              PAN: {businessDetails?.panNumber || "On file"}
+            </p>
+          </div>
+
+          <div className="p-2.5 rounded-lg bg-muted/40 border border-border/60">
+            <p className="text-[10px] font-medium text-muted-foreground">Settlement Bank</p>
+            <p className="text-xs font-bold text-emerald-600 flex items-center gap-1 mt-0.5">
+              <CheckCircle2 size={12} /> {bankDetails?.verificationStatus === "verified" ? "Verified" : "Attached"}
+            </p>
+            <p className="text-[11px] text-muted-foreground truncate">
+              {bankDetails?.bankName || "Bank on file"}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Reject Modal / Reason input */}
+      {rejectOpen && (
+        <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-red-600">Provide reason for rejection:</span>
+            <button
+              type="button"
+              onClick={() => setRejectOpen(false)}
+              className="text-xs text-muted-foreground hover:text-foreground"
+            >
+              Cancel
+            </button>
+          </div>
+          <Textarea
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="e.g. Incomplete hotel images, incorrect address, missing documents..."
+            className="text-xs min-h-[60px]"
+            autoFocus
+          />
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setRejectOpen(false)}
+              className="text-xs h-7"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              disabled={rejectMutation.isPending || !reason.trim()}
+              onClick={handleReject}
+              className="text-xs h-7 gap-1"
+            >
+              {rejectMutation.isPending && <Loader2 className="w-3 h-3 animate-spin" />}
+              Confirm Rejection
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const PropertyDetailContent = () => {
   const { propId } = useParams();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const id = Array.isArray(propId) ? propId[0] : propId || "";
-  const { data, isLoading } = usePropertyDetails(id);
+  const queryPropertyId = searchParams.get("propertyId") || "";
+
+  const { data, isLoading } = usePropertyDetails(id, queryPropertyId);
   const vendorData = (data as any)?.data;
 
   if (isLoading || !vendorData) return <PageSkeleton />;
@@ -118,6 +319,14 @@ const PropertyDetail = () => {
     businessId,
   } = vendorData;
 
+  const properties = vendorData.properties || [];
+
+  const handleSelectProperty = (targetPropertyId: string) => {
+    router.replace(`/properties/${id}?propertyId=${targetPropertyId}`, {
+      scroll: false,
+    });
+  };
+
   const rawAddress =
     formatAddress(propertyDetails?.address) ||
     formatAddress(businessDetails?.address);
@@ -131,6 +340,10 @@ const PropertyDetail = () => {
       ? `${rawAddress}, ${city}`
       : rawAddress
     : city || "N/A";
+
+  const isCurrentPropertyPending =
+    propertyDetails &&
+    (propertyDetails.verificationStatus === "pending" || !propertyDetails.isActive);
 
   return (
     <ErrorBoundary
@@ -159,6 +372,15 @@ const PropertyDetail = () => {
                       {vendor.serviceType}
                     </Badge>
                   )}
+                  {isCurrentPropertyPending && (
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30 font-semibold animate-pulse flex items-center gap-1"
+                    >
+                      <Clock size={11} />
+                      Hotel Pending Approval
+                    </Badge>
+                  )}
                 </div>
                 <div className="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400">
                   <MapPin size={14} className="text-zinc-400" />
@@ -177,8 +399,94 @@ const PropertyDetail = () => {
               </div>
             </header>
 
+            {/* Hotel / Property Tabs */}
+            {properties && properties.length > 0 && (
+              <div className="bg-card border border-border rounded-2xl p-3.5 shadow-sm space-y-2.5">
+                <div className="flex items-center justify-between px-1">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-4 w-4 text-primary" />
+                    <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      {vendor?.serviceType === "hotel" ? "Hotels" : "Properties"} ({properties.length})
+                    </h2>
+                  </div>
+                  <span className="text-[11px] text-muted-foreground hidden sm:inline">
+                    Click a tab to view details & manage hotel
+                  </span>
+                </div>
+                <div className="flex items-center gap-2.5 overflow-x-auto pb-1 scrollbar-thin">
+                  {properties.map((prop: any) => {
+                    const isSelected =
+                      (propertyDetails?._id || propertyDetails?.id) === prop._id;
+                    return (
+                      <button
+                        key={prop._id}
+                        type="button"
+                        onClick={() => handleSelectProperty(prop._id)}
+                        className={cn(
+                          "flex items-center gap-2.5 px-3 py-2 rounded-xl border text-left transition-all shrink-0 cursor-pointer group",
+                          isSelected
+                            ? "bg-primary/10 border-primary text-foreground shadow-sm ring-1 ring-primary/40 font-semibold"
+                            : "bg-muted/40 border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+                        )}
+                      >
+                        {/* Hotel Profile Image */}
+                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-muted border border-border/80 shrink-0 relative">
+                          {prop.image ? (
+                            <img
+                              src={prop.image}
+                              alt={prop.name}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary">
+                              <Building2 size={18} />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex flex-col min-w-0 pr-1">
+                          <span className="text-xs font-semibold truncate max-w-[170px] text-foreground">
+                            {prop.name}
+                          </span>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            {prop.city && (
+                              <span className="text-[10px] text-muted-foreground truncate max-w-[90px]">
+                                {prop.city}
+                              </span>
+                            )}
+                            {prop.verificationStatus === "verified" && prop.isActive ? (
+                              <span className="inline-flex items-center gap-0.5 text-[9px] font-medium text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded-full border border-emerald-500/20">
+                                <CheckCircle2 size={10} /> Approved
+                              </span>
+                            ) : prop.verificationStatus === "pending" || !prop.isActive ? (
+                              <span className="inline-flex items-center gap-0.5 text-[9px] font-medium text-amber-600 bg-amber-500/10 px-1.5 py-0.5 rounded-full border border-amber-500/20 animate-pulse">
+                                <Clock size={10} /> Pending
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-0.5 text-[9px] font-medium text-red-600 bg-red-500/10 px-1.5 py-0.5 rounded-full border border-red-500/20">
+                                Rejected
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
               <div className="lg:col-span-8 space-y-3">
+                {/* Pending Hotel Approval Banner (when pending) */}
+                {isCurrentPropertyPending && (
+                  <PendingHotelApprovalCard
+                    propertyDetails={propertyDetails}
+                    vendor={vendor}
+                    user={user}
+                    businessDetails={businessDetails}
+                    bankDetails={bankDetails}
+                  />
+                )}
                 {/* Step 2: Verification Documents */}
                 <StepSection
                   step={2}
@@ -614,7 +922,10 @@ const PropertyDetail = () => {
                 {vendor?.status === "approved" &&
                 (vendor?.serviceType === "hotel" ||
                   vendor?.serviceType === "tour") ? (
-                  <Link href={`/properties/${id}/listings`} className="block">
+                  <Link
+                    href={`/properties/${id}/listings${propertyDetails?._id ? `?propertyId=${propertyDetails._id}` : ""}`}
+                    className="block"
+                  >
                     <div className="rounded-2xl p-4 shadow-sm border border-border hover:border-primary/30 hover:shadow-md transition-all cursor-pointer group">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -637,11 +948,14 @@ const PropertyDetail = () => {
                                 ? "View Rooms"
                                 : "View Tour Packages"}
                             </h3>
-                            <p className="text-[10px] text-muted-foreground">
-                              See vendor-added{" "}
-                              {vendor?.serviceType === "hotel"
-                                ? "room types"
-                                : "tour packages"}
+                            <p className="text-[10px] text-muted-foreground truncate max-w-[190px]">
+                              {propertyDetails?.name
+                                ? `Rooms for ${propertyDetails.name}`
+                                : `See vendor-added ${
+                                    vendor?.serviceType === "hotel"
+                                      ? "room types"
+                                      : "tour packages"
+                                  }`}
                             </p>
                           </div>
                         </div>
@@ -1562,4 +1876,10 @@ function PropertyPromotionCard({
   );
 }
 
-export default PropertyDetail;
+export default function PropertyDetailPage() {
+  return (
+    <Suspense fallback={<PageSkeleton />}>
+      <PropertyDetailContent />
+    </Suspense>
+  );
+}

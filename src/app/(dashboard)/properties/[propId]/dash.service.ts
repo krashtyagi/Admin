@@ -1,7 +1,11 @@
 import { axiosApi } from "@/lib/axios";
 
-export const propertiesDetails = (id: string) => {
-  return axiosApi.get(`/admin/property/${id}`).then((res) => res.data);
+export const propertiesDetails = (id: string, propertyId?: string) => {
+  return axiosApi
+    .get(`/admin/property/${id}`, {
+      params: propertyId ? { propertyId } : undefined,
+    })
+    .then((res) => res.data);
 };
 
 export const approveProperty = (id: string) => {
@@ -47,9 +51,30 @@ export const assignPromotion = (data: {
     .then((res) => res.data);
 };
 
-export const getPropertyListings = (vendorId: string) => {
+export const getPropertyListings = (vendorId: string, propertyId?: string) => {
   return axiosApi
-    .get(`/admin/property/${vendorId}/listings`)
+    .get(`/admin/property/${vendorId}/listings`, {
+      params: propertyId ? { propertyId } : undefined,
+    })
+    .then((res) => res.data);
+};
+
+export const approveAdditionalProperty = (
+  id: string,
+  serviceType: string,
+) => {
+  return axiosApi
+    .post(`/admin/vendor-properties/${id}/approve`, { serviceType })
+    .then((res) => res.data);
+};
+
+export const rejectAdditionalProperty = (
+  id: string,
+  serviceType: string,
+  reason: string,
+) => {
+  return axiosApi
+    .post(`/admin/vendor-properties/${id}/reject`, { serviceType, reason })
     .then((res) => res.data);
 };
 

@@ -9,6 +9,8 @@ import {
   updateBusinessRank,
   assignPromotion,
   getPropertyListings,
+  approveAdditionalProperty,
+  rejectAdditionalProperty,
   blockProperty,
   unblockProperty,
   deleteProperty,
@@ -17,13 +19,13 @@ import {
   deleteDeletedPropertyRecord,
 } from "./dash.service";
 
-export const usePropertyDetails = (id: string) => {
+export const usePropertyDetails = (id: string, propertyId?: string) => {
   return useQuery({
-    queryKey: ["admin_property_details", id],
-    queryFn: () => propertiesDetails(id),
-    staleTime: 200000,
+    queryKey: ["admin_property_details", id, propertyId],
+    queryFn: () => propertiesDetails(id, propertyId),
+    staleTime: 60000,
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnMount: true,
     refetchOnReconnect: true,
     retry: false,
   });
@@ -106,14 +108,47 @@ export const useAssignPromotion = () => {
   });
 };
 
-export const usePropertyListings = (vendorId: string) => {
+export const usePropertyListings = (vendorId: string, propertyId?: string) => {
   return useQuery({
-    queryKey: ["admin_property_listings", vendorId],
-    queryFn: () => getPropertyListings(vendorId),
+    queryKey: ["admin_property_listings", vendorId, propertyId],
+    queryFn: () => getPropertyListings(vendorId, propertyId),
     enabled: !!vendorId,
-    staleTime: 300000,
+    staleTime: 60000,
     refetchOnWindowFocus: false,
     retry: false,
+  });
+};
+
+export const useApproveAdditionalProperty = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, serviceType }: { id: string; serviceType: string }) =>
+      approveAdditionalProperty(id, serviceType),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin_property_details"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-pending-properties"] });
+      queryClient.invalidateQueries({ queryKey: ["property"] });
+    },
+  });
+};
+
+export const useRejectAdditionalProperty = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      serviceType,
+      reason,
+    }: {
+      id: string;
+      serviceType: string;
+      reason: string;
+    }) => rejectAdditionalProperty(id, serviceType, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin_property_details"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-pending-properties"] });
+      queryClient.invalidateQueries({ queryKey: ["property"] });
+    },
   });
 };
 
