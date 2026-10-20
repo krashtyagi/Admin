@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect } from 'react'
+import React from 'react'
 
 type Props = {}
 export interface DailyBooking {
@@ -66,13 +66,41 @@ import { useDashboard, useRecentBookings } from './queryes'
 import { SectionCards } from './_components/sectionCards';
 import Charts from './_components/Charts';
 import { BookingsDataTable } from './_components/BookingList';
+import { RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 function Dashboard() {
   const {data:d , isLoading , refetch , isRefetching} = useDashboard()
   const data  = d?.data?.data as DashboardData
-  const {data:recentBookingsData , isLoading:recentBookingsLoading} = useRecentBookings()
+  const {data:recentBookingsData , isLoading:recentBookingsLoading, refetch: refetchBookings, isRefetching: isRefetchingBookings} = useRecentBookings()
+
+  const handleRefresh = () => {
+    refetch();
+    refetchBookings();
+  };
+
+  const isAnyRefetching = isRefetching || isRefetchingBookings;
+
   return (
-    <div className="  min-h-screen space-y-3 font-sans">
+    <div className="min-h-screen space-y-3 font-sans">
+
+      {/* Dashboard Header with Refresh */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-sm text-muted-foreground">Overview of your platform performance</p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRefresh}
+          disabled={isAnyRefetching}
+          className="gap-2 h-9"
+        >
+          <RefreshCw className={`h-4 w-4 ${isAnyRefetching ? 'animate-spin' : ''}`} />
+          {isAnyRefetching ? 'Refreshing...' : 'Refresh'}
+        </Button>
+      </div>
 
       {/* 1. Top Stats Row */}
       <SectionCards data={data?.stats} loading={isLoading}/>
@@ -86,8 +114,6 @@ function Dashboard() {
       {/* 3. Table Row */}
       <div className="flex gap-3 w-full">
         <BookingsDataTable  bookings={recentBookingsData?.data?.data || [] as Booking[]} />
-
-        
       </div>
     </div>
   )

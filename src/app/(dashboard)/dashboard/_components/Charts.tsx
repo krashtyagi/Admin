@@ -44,7 +44,13 @@ const Charts = ({ bookings: bookingData, revenue: r }: { bookings: DailyBooking[
     <div className="grid grid-cols-1 lg:grid-cols-9 gap-4">
       {/* Daily Bookings Area Chart */}
       <Card className="lg:col-span-5 p-2">
-  <CardContent className="h-[300px] pt-6">
+        <CardHeader className="flex flex-row items-center justify-between pb-4">
+          <div>
+            <CardTitle className="text-base">Daily Bookings</CardTitle>
+            <CardDescription>Last {bookingData?.length || 7} days</CardDescription>
+          </div>
+        </CardHeader>
+  <CardContent className="h-[300px]">
     <ChartContainer config={bookingConfig} className="h-full w-full">
       <AreaChart 
         data={bookingData} 
