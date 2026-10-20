@@ -38,13 +38,22 @@ const formatDate = (iso: string) => {
 };
 
 const getStatusStyles = (status: string) => {
-  switch (status.toLowerCase()) {
+  const s = (status || "").toLowerCase();
+  switch (s) {
     case "confirmed":
-      return "bg-primary/10 text-primary border-primary/20 hover:bg-primary/15";
+      return "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 hover:bg-emerald-500/15";
+    case "checked_in":
+      return "bg-blue-500/10 text-blue-600 border-blue-500/20 hover:bg-blue-500/15";
+    case "staying":
+      return "bg-purple-500/10 text-purple-600 border-purple-500/20 hover:bg-purple-500/15";
+    case "checked_out":
+      return "bg-slate-500/10 text-slate-600 border-slate-500/20 hover:bg-slate-500/15";
+    case "completed":
+      return "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 hover:bg-emerald-500/15";
     case "cancelled":
       return "bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/15";
     case "pending":
-      return "bg-orange-500/10 text-orange-600 border-orange-500/20 hover:bg-orange-500/15";
+      return "bg-amber-500/10 text-amber-600 border-amber-500/20 hover:bg-amber-500/15";
     default:
       return "bg-muted text-muted-foreground border-transparent";
   }
@@ -73,24 +82,27 @@ export const columns: ColumnDef<Booking>[] = [
     header: "Property",
     cell: ({ row }) => (
       <div className="max-w-[200px] truncate text-sm text-muted-foreground">
-        <span className="font-medium text-foreground/90">{row.getValue("propertyName")}</span>
+        <span className="font-medium text-foreground/90">{row.getValue("propertyName") || "Stay"}</span>
         <br />
-        <span className="text-[10px] uppercase opacity-70">{row.original.serviceType}</span>
+        <span className="text-[10px] uppercase opacity-70">{row.original.serviceType || "hotel"}</span>
       </div>
     ),
   },
   {
     accessorKey: "checkIn",
     header: "Check In",
-    cell: ({ row }) => (
-      <div className="text-sm text-foreground/80">{formatDate(row.getValue("checkIn"))}</div>
-    ),
+    cell: ({ row }) => {
+      const rawDate = row.getValue("checkIn") || (row.original as any).bookingDate || (row.original as any).createdAt;
+      return <div className="text-sm text-foreground/80">{formatDate(rawDate as string)}</div>;
+    },
   },
   {
     accessorKey: "totalAmount",
     header: "Amount",
     cell: ({ row }) => {
-      const amount = parseFloat(row.getValue("totalAmount"));
+      const raw = row.getValue("totalAmount") ?? (row.original as any).amount ?? 0;
+      const num = typeof raw === "number" ? raw : parseFloat(raw);
+      const amount = isNaN(num) ? 0 : num;
       const formatted = new Intl.NumberFormat("en-IN", {
         style: "currency",
         currency: "INR",
@@ -103,10 +115,11 @@ export const columns: ColumnDef<Booking>[] = [
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
-      const status = row.getValue("status") as string;
+      const status = (row.getValue("status") as string) || "pending";
+      const displayStatus = status.replace("_", " ");
       return (
         <Badge variant="outline" className={`capitalize font-medium ${getStatusStyles(status)}`}>
-          {status}
+          {displayStatus}
         </Badge>
       );
     },
