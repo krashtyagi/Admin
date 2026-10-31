@@ -12,6 +12,7 @@ import * as z from "zod";
 import { useActiveTax, useSetTax } from "../_calls/queryes";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import PopularSectionsSettings from "./popular-sections-settings";
 
 export const TaxSchema = z.object({
   taxPercentage: z.coerce.number().min(0, "Rate cannot be negative").max(100, "Rate cannot exceed 100%"),
@@ -32,7 +33,7 @@ export const PasswordSchema = z.object({
   path: ["confirmPassword"],
 });
 
-export default function AdminSettingsPage() {
+export default function AdminSettingsPage({ defaultTab = "destinations" }: { defaultTab?: string }) {
   const { data: taxData, isLoading: isTaxLoading } = useActiveTax();
   const setTaxMutation = useSetTax();
 
@@ -77,12 +78,18 @@ export default function AdminSettingsPage() {
     <div className="max-w-full mx-auto p-3">
       <h1 className="text-3xl font-bold mb-6 tracking-tight text-foreground">Admin Settings</h1>
 
-      <Tabs defaultValue="tax" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 max-w-[400px] mb-6">
-          <TabsTrigger value="tax">Tax Configurations</TabsTrigger>
-          <TabsTrigger value="profile">Admin Profile</TabsTrigger>
+      <Tabs defaultValue={defaultTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 max-w-[620px] mb-6">
+          <TabsTrigger value="destinations">Destinations</TabsTrigger>
+          <TabsTrigger value="tax">Tax Rates</TabsTrigger>
+          <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="password">Security</TabsTrigger>
         </TabsList>
+
+        {/* --- Destination Carousels Tab --- */}
+        <TabsContent value="destinations">
+          <PopularSectionsSettings />
+        </TabsContent>
 
         {/* --- Tax Configurations Tab --- */}
         <TabsContent value="tax">
