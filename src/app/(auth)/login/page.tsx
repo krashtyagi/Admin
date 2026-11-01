@@ -1,89 +1,32 @@
-"use client"
+"use client";
 
-import { GalleryVerticalEnd } from "lucide-react"
-import { LoginForm } from "./login-form"
-import LOGO from "@/components/logo/logo"
-import { useRouter } from "next/navigation"
-import { useCurrentUser } from "@/services/queryes"
-import { useAuthStore } from "@/stores/auth.store"
-import { useEffect } from "react"
-import { adminAccessToken } from "@/services/auth"
-import { useIsMobile } from "@/hooks/use-mobile"
+import Auth07 from "@/components/watermelon-ui/auth-07";
+import { useRouter } from "next/navigation";
+import { useCurrentUser } from "@/services/queryes";
+import { useAuthStore } from "@/stores/auth.store";
+import { useEffect } from "react";
+import { adminAccessToken } from "@/services/auth";
 
 export default function LoginPage() {
-    const router = useRouter()
-    const { data } = useCurrentUser()
-    const { draft } = useAuthStore()
-    const ismobile = useIsMobile();
-    useEffect(() => {
-        if (data?.data?.role === "vendor" && localStorage.getItem(adminAccessToken) !== null) {
-            if (draft) {
-                router.push("/signup/process")
-            } else {
-                router.push("/dashboard")
-            }
-        }
-    }, [data])
-    return (
-        <div className="grid min-h-svh lg:grid-cols-2">
-            <div className="flex flex-col gap-4 p-6 md:p-5">
-                <div className="flex justify-center gap-2 md:justify-start">
-                    {/* <a
-                        href="#"
-                        className="group flex items-center gap-2 font-medium transition-all duration-300"
-                    >
-                        <div
-                            className={`
-                relative flex size-10 md:size-32 items-center justify-center rounded-xl
-                
-                shadow-[0_0_20px_rgba(var(--primary-rgb),0.4)]
-                overflow-hidden
-                animate-logo-float
-                group-hover:scale-110 group-hover:shadow-[0_0_35px_rgba(var(--primary-rgb),0.7)]
-                transition-all duration-500 ease-out
-              `}
-                        >
+  const router = useRouter();
+  const { data } = useCurrentUser();
+  const { draft } = useAuthStore();
 
+  useEffect(() => {
+    if (localStorage.getItem(adminAccessToken) !== null) {
+      if (data?.data?.role === "vendor" && draft) {
+        router.push("/signup/process");
+      } else if (
+        data?.data?.role === "blog_author" ||
+        data?.data?.role === "blog_editor" ||
+        data?.data?.role === "seo_manager"
+      ) {
+        router.push("/blog");
+      } else {
+        router.push("/dashboard");
+      }
+    }
+  }, [data, draft, router]);
 
-                            
-
-
-                        </div>
-
-
-                    </a> */}
-                    {/* {
-                        !ismobile && <LOGO
-
-                        />
-                    } */}
-
-                </div>
-
-                <div className="flex flex-1 items-center justify-center">
-                    <div className="w-full max-w-xs">
-                        {<div className="flex justify-center w-full mb-6">
-                            <LOGO />
-                        </div>}
-                        <LoginForm />
-                    </div>
-                </div>
-            </div>
-
-            <div className="hidden bg-muted lg:flex items-center justify-center w-full h-full">
-                <img
-                    src="/admin-dash.png"
-                    alt="Acme Inc. Branding"
-                    className={`
-            h-32 md:h-100 lg:h-108 object-contain
-            drop-shadow-2xl
-            animate-hero-float
-            dark:brightness-[0.25] dark:grayscale
-            transition-transform duration-700
-            hover:scale-105
-          `}
-                />
-            </div>
-        </div>
-    )
+  return <Auth07 />;
 }

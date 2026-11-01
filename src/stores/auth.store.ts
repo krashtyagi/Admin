@@ -35,6 +35,7 @@ interface AuthStates {
   userLogin: (data: Login_signup_Data) => Promise<{
     success: boolean;
     message: string;
+    user?: any;
   }>;
   userSignup: (
     data: Login_signup_Data,
@@ -133,6 +134,7 @@ export const useAuthStore = create<AuthStates>()((set) => ({
         return {
           success: true,
           message: res.data.message,
+          user: res.data.data.user,
         };
       }
       return {

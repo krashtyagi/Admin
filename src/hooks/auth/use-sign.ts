@@ -30,7 +30,16 @@ export const useLogin = () => {
       if (result.success) {
         toast.success(result.message || "Login successful!");
 
-        router.push("/dashboard");
+        const role = result.user?.role;
+        if (
+          role === "blog_author" ||
+          role === "blog_editor" ||
+          role === "seo_manager"
+        ) {
+          router.push("/blog");
+        } else {
+          router.push("/dashboard");
+        }
       } else {
         toast.error(result.message || "Login failed");
       }
