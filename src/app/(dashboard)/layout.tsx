@@ -5,17 +5,22 @@ import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 
 import data from "./data.json"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import LogoLoader from "@/components/loaders/logoloader"
 import { useVariants } from "@/providers/main-provider/variants-provider"
 import { ErrorBoundary } from 'react-error-boundary'
 import { CompactFooter } from "@/components/footer/compactfooter"
 import { adminAccessToken } from "@/services/auth"
+import { useCurrentUser } from "@/services/queryes"
+
 export default function Layout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [ok, setOk] = useState(false);
-  const { variant } = useVariants()
+  const { variant } = useVariants();
+  const { data: userRes } = useCurrentUser();
+
   useEffect(() => {
     if (!localStorage.getItem(adminAccessToken)) {
       router.replace("/login");
@@ -23,6 +28,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       setOk(true);
     }
   }, [router]);
+
+  useEffect(() => {
+    const role = userRes?.data?.role;
+    if (role && role !== "admin" && role !== "super_admin") {
+      const marketRoutes = ["/blog", "/blog-categories", "/writers"];
+      const allowed = marketRoutes.some((route) => pathname.startsWith(route));
+      if (!allowed) {
+        router.replace("/blog");
+      }
+    }
+  }, [userRes, pathname, router]);
 
   if (!ok) return <LogoLoader />;
   return (
