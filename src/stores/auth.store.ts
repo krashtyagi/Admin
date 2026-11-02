@@ -1,5 +1,6 @@
 import { axiosApi } from "@/lib/axios";
 import { adminAccessToken } from "@/services/auth";
+import { authClient } from "@/lib/auth-client";
 import { create } from "zustand";
 
 interface User {
@@ -103,10 +104,69 @@ export const useAuthStore = create<AuthStates>()((set) => ({
   draft: true,
 
   userLogin: async (data: Login_signup_Data) => {
-    // console.log("login");
-
     set({ isLoging: true });
     try {
+      if (data.email && data.password) {
+        const res = await authClient.signIn.email({
+          email: data.email,
+          password: data.password,
+        });
+
+        if (res.data) {
+          const userRole = (res.data.user as any)?.role || "user";
+          const allowedRoles = [
+            "admin",
+            "super_admin",
+            "blog_author",
+            "blog_editor",
+            "seo_manager",
+            "reviewer",
+          ];
+
+          if (!allowedRoles.includes(userRole)) {
+            await authClient.signOut();
+            return {
+              success: false,
+              message: "Access denied. Admin privileges required.",
+            };
+          }
+
+          set({ currUser: res.data.user as any });
+          const sessionToken = (res.data as any)?.token || (res.data as any)?.session?.token || "better-auth-session";
+          localStorage.setItem(adminAccessToken, sessionToken);
+          localStorage.setItem("status", "approved");
+
+          return {
+            success: true,
+            message: "Login successful",
+            user: res.data.user,
+          };
+        }
+
+        if (res.error) {
+          // Fallback to legacy login during transition
+          try {
+            const fallbackRes = await axiosApi.post("/auth/login", data);
+            if (fallbackRes.data.success) {
+              set({ currUser: fallbackRes.data.data.user });
+              const token = fallbackRes.data.accessToken;
+              if (token) localStorage.setItem(adminAccessToken, token);
+              localStorage.setItem("status", "approved");
+              return {
+                success: true,
+                message: fallbackRes.data.message,
+                user: fallbackRes.data.data.user,
+              };
+            }
+          } catch (e) {}
+
+          return {
+            success: false,
+            message: res.error.message || "Login failed",
+          };
+        }
+      }
+
       const res = await axiosApi.post("/auth/login", data);
       if (res.data.success) {
         set({ currUser: res.data.data.user });
@@ -120,16 +180,6 @@ export const useAuthStore = create<AuthStates>()((set) => ({
           draft: ["draft", "pending", "rejected"].includes(status),
           currStep: currentStep,
         });
-
-        // console.log("asd");
-        // console.log(res);
-
-        // console.log({
-        //   success: true,
-        //   message: res.data.message,
-        //   currentStep: res.data.data.vendor.currentStep || 1,
-        //   status: res.data.data.vendor.status,
-        // });
 
         return {
           success: true,

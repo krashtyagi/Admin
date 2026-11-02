@@ -114,5 +114,18 @@ export const deleteDeletedPropertyRecord = (id: string) => {
     .then((res) => res.data);
 };
 
+export const updatePropertyImages = (
+  id: string,
+  data: {
+    images: any[];
+    serviceType?: string;
+    propertyId?: string;
+  },
+) => {
+  return axiosApi
+    .patch(`/admin/property/${id}/images`, data)
+    .then((res) => res.data);
+};
+
 
 

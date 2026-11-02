@@ -13,24 +13,49 @@ import { ErrorBoundary } from 'react-error-boundary'
 import { CompactFooter } from "@/components/footer/compactfooter"
 import { adminAccessToken } from "@/services/auth"
 import { useCurrentUser } from "@/services/queryes"
+import { ADMIN_ROLES } from "@/services/user.service"
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [ok, setOk] = useState(false);
   const { variant } = useVariants();
-  const { data: userRes } = useCurrentUser();
+  const { data: userRes, isLoading, isFetching, refetch } = useCurrentUser();
+
+  const user = userRes?.data;
+  const role = user?.role;
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem(adminAccessToken)
+      : null;
+
+  const hasValidAdminSession = Boolean(
+    token &&
+    user &&
+    ADMIN_ROLES.includes(role)
+  );
+
+  // If admin token is stored in localStorage but user query hasn't populated, refetch
+  useEffect(() => {
+    if (token && !user && !isLoading && !isFetching) {
+      refetch();
+    }
+  }, [token, user, isLoading, isFetching, refetch]);
 
   useEffect(() => {
-    if (!localStorage.getItem(adminAccessToken)) {
+    if (isLoading || isFetching) return;
+
+    if (!token || !hasValidAdminSession) {
+      setOk(false);
       router.replace("/login");
     } else {
       setOk(true);
     }
-  }, [router]);
+  }, [hasValidAdminSession, isLoading, isFetching, token, router]);
 
   useEffect(() => {
-    const role = userRes?.data?.role;
+    if (!hasValidAdminSession) return;
+
     if (role && role !== "admin" && role !== "super_admin") {
       const marketRoutes = ["/blog", "/blog-categories", "/writers"];
       const allowed = marketRoutes.some((route) => pathname.startsWith(route));
@@ -38,9 +63,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         router.replace("/blog");
       }
     }
-  }, [userRes, pathname, router]);
+  }, [hasValidAdminSession, role, pathname, router]);
 
-  if (!ok) return <LogoLoader />;
+  if (!ok || !hasValidAdminSession) return <LogoLoader />;
   return (
     <SidebarProvider
       style={

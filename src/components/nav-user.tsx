@@ -37,6 +37,7 @@ import { useState, useEffect } from "react"
 import { useQueryClient } from "@tanstack/react-query";
 import { useVariants } from "@/providers/main-provider/variants-provider"
 import { adminAccessToken } from "@/services/auth"
+import { signOut } from "@/lib/auth-client"
 
 export function NavUser() {
   const router = useRouter()
@@ -126,7 +127,10 @@ export function NavUser() {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => {
+            <DropdownMenuItem onClick={async () => {
+              try {
+                await signOut();
+              } catch (e) {}
               localStorage.removeItem(adminAccessToken)
               localStorage.removeItem("status")
               queryClient.clear();

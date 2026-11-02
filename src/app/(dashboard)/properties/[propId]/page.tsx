@@ -44,7 +44,9 @@ import {
   useBlockProperty,
   useUnblockProperty,
   useDeleteProperty,
+  useUpdatePropertyImages,
 } from "./queryes";
+import { AdminPropertyImageArranger } from "./_components/admin-property-image-arranger";
 import {
   Popover,
   PopoverContent,
@@ -304,6 +306,7 @@ const PropertyDetailContent = () => {
   const queryPropertyId = searchParams.get("propertyId") || "";
 
   const { data, isLoading } = usePropertyDetails(id, queryPropertyId);
+  const updatePropertyImagesMutation = useUpdatePropertyImages();
   const vendorData = (data as any)?.data;
 
   if (isLoading || !vendorData) return <PageSkeleton />;
@@ -344,6 +347,24 @@ const PropertyDetailContent = () => {
   const isCurrentPropertyPending =
     propertyDetails &&
     (propertyDetails.verificationStatus === "pending" || !propertyDetails.isActive);
+
+  const handleSavePropertyImages = async (updatedImages: any[]) => {
+    try {
+      const targetId = propertyDetails?._id || businessId || id;
+      await updatePropertyImagesMutation.mutateAsync({
+        id: targetId,
+        images: updatedImages,
+        serviceType: vendor?.serviceType || "hotel",
+        propertyId: propertyDetails?._id,
+      });
+      toast.success("Property gallery images & index order saved successfully!");
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.message || err?.message || "Failed to update property images",
+      );
+      throw err;
+    }
+  };
 
   return (
     <ErrorBoundary
@@ -683,28 +704,19 @@ const PropertyDetailContent = () => {
                           </p>
                         </div>
                       )}
-                      {propertyDetails.images?.length > 0 && (
-                        <div>
-                          <p className="text-[10px] font-bold uppercase text-muted-foreground mb-2 flex items-center gap-1.5">
-                            <ImageIcon size={12} /> Gallery (
-                            {propertyDetails.images.length})
-                          </p>
-                          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                            {propertyDetails.images.map(
-                              (img: any, i: number) => (
-                                <ImagePreview key={i} src={img.url || img}>
-                                  <div className="aspect-square rounded-lg overflow-hidden border border-border cursor-pointer group">
-                                    <img
-                                      src={img.url || img}
-                                      className="w-full h-full object-cover transition-transform group-hover:scale-110"
-                                    />
-                                  </div>
-                                </ImagePreview>
-                              ),
-                            )}
-                          </div>
-                        </div>
-                      )}
+                      {/* Interactive Gallery & Photo Indexing Panel */}
+                      <div className="pt-2">
+                        <AdminPropertyImageArranger
+                          images={propertyDetails.images || []}
+                          propertyName={
+                            propertyDetails.name ||
+                            businessDetails?.businessName ||
+                            "Property"
+                          }
+                          onSave={handleSavePropertyImages}
+                          saving={updatePropertyImagesMutation.isPending}
+                        />
+                      </div>
                       {propertyDetails.amenities?.length > 0 && (
                         <div>
                           <p className="text-[10px] font-bold uppercase text-muted-foreground mb-2 flex items-center gap-1.5">
