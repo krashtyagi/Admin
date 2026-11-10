@@ -9,13 +9,15 @@ import { MessageModal } from '@/components/messagemodal';
 type Props = {}
 export interface Property {
   _id: string;
-  status: "approved" | "pending" | "rejected";
+  status: "approved" | "pending" | "rejected" | "blocked";
   submittedAt?: string; // Optional because some entries don't have it
-  propertyName: string;
+  propertyName?: string;
+  businessName?: string;
   city: string;
   vendorName: string;
   rank: string;
   canAssignRank: boolean;
+  serviceType?: string;
 }
 
 export interface PropertyResponse {
@@ -30,7 +32,7 @@ export interface PropertyResponse {
   };
 }
 const page = (props: Props) => {
-  const {data , isLoading} = useProperty()
+  const { data, isLoading } = useProperty({ limit: 200 });
   if(isLoading){
     return <PageSkeleton/>
   }

@@ -3,16 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { currentUser } from "./user.service";
 
 export const useCurrentUser = () => {
-  const token =
-    typeof window !== "undefined" && localStorage.getItem("accessToken");
   return useQuery({
     queryKey: ["current_user"],
     queryFn: currentUser,
-    staleTime: 2000,
+    staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnMount: true,
     refetchOnReconnect: true,
-    enabled: !!token,
-    retry: false, // optional
+    retry: false,
   });
 };

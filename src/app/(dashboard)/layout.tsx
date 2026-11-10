@@ -5,25 +5,67 @@ import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 
 import data from "./data.json"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import LogoLoader from "@/components/loaders/logoloader"
 import { useVariants } from "@/providers/main-provider/variants-provider"
 import { ErrorBoundary } from 'react-error-boundary'
 import { CompactFooter } from "@/components/footer/compactfooter"
+import { adminAccessToken } from "@/services/auth"
+import { useCurrentUser } from "@/services/queryes"
+import { ADMIN_ROLES } from "@/services/user.service"
+
 export default function Layout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [ok, setOk] = useState(false);
-  const { variant } = useVariants()
+  const { variant } = useVariants();
+  const { data: userRes, isLoading, isFetching, refetch } = useCurrentUser();
+
+  const user = userRes?.data;
+  const role = user?.role;
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem(adminAccessToken)
+      : null;
+
+  const hasValidAdminSession = Boolean(
+    token &&
+    user &&
+    ADMIN_ROLES.includes(role)
+  );
+
+  // If admin token is stored in localStorage but user query hasn't populated, refetch
   useEffect(() => {
-    if (!localStorage.getItem("accessToken")) {
+    if (token && !user && !isLoading && !isFetching) {
+      refetch();
+    }
+  }, [token, user, isLoading, isFetching, refetch]);
+
+  useEffect(() => {
+    if (isLoading || isFetching) return;
+
+    if (!token || !hasValidAdminSession) {
+      setOk(false);
       router.replace("/login");
     } else {
       setOk(true);
     }
-  }, [router]);
+  }, [hasValidAdminSession, isLoading, isFetching, token, router]);
 
-  if (!ok) return <LogoLoader />;
+  useEffect(() => {
+    if (!hasValidAdminSession) return;
+
+    if (role && role !== "admin" && role !== "super_admin") {
+      const marketRoutes = ["/blog", "/blog-categories", "/writers"];
+      const allowed = marketRoutes.some((route) => pathname.startsWith(route));
+      if (!allowed) {
+        router.replace("/blog");
+      }
+    }
+  }, [hasValidAdminSession, role, pathname, router]);
+
+  if (!ok || !hasValidAdminSession) return <LogoLoader />;
   return (
     <SidebarProvider
       style={

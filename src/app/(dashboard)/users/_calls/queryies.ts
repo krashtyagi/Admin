@@ -1,6 +1,6 @@
 "use client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { adminUsers, getDestination, singleUser, updateUserStatus } from "./users.service";
+import { adminUsers, getDestination, singleUser, updateUserStatus, getUserProfile } from "./users.service";
 import { usePanelRef } from "react-resizable-panels";
 
 export const useAllUsers = (params?: any) => {
@@ -25,6 +25,15 @@ export const useUser = (id: string) => {
     refetchOnMount: false,
     refetchOnReconnect: true,
     retry: false, // optional
+    enabled: !!id,
+  });
+};
+
+export const useUserProfile = (id: string) => {
+  return useQuery({
+    queryKey: ["user_profile", id],
+    queryFn: () => getUserProfile(id),
+    staleTime: 20000,
     enabled: !!id,
   });
 };

@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { usePaymentDetail } from "../queryes";
+import { formatAddress } from "@/lib/utils";
 
 const formatDateTime = (iso: string) => {
   if (!iso) return "—";
@@ -225,7 +226,7 @@ export function PaymentDetailView({ paymentId, onBack }: PaymentDetailProps) {
                   <p className="text-sm font-medium">{service.hotel.name}</p>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <MapPin className="h-3 w-3" />
-                    {service.hotel.city} {service.hotel.address && `· ${service.hotel.address}`}
+                    {service.hotel.city} {formatAddress(service.hotel.address) && `· ${formatAddress(service.hotel.address)}`}
                   </div>
                 </div>
               )}

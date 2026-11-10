@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { BookingData } from "./page";
+import { formatAddress } from "@/lib/utils";
 
 export default function BookingDetailView({ data }: { data: BookingData }) {
   const { bookingInfo, service, pricing, payment, vendor, user, _id } = data;
@@ -186,7 +187,7 @@ export default function BookingDetailView({ data }: { data: BookingData }) {
                 <div className="flex items-center gap-0.5 text-amber-500"><Star className="h-3 w-3 fill-current" /><span className="text-xs font-bold">{service.hotel.rating}</span></div>
               </div>
               <div className="space-y-1.5">
-                <div className="flex items-start gap-1.5 text-muted-foreground"><MapPin className="h-3 w-3 mt-0.5 shrink-0" /><span className="text-[10px] leading-tight">{service.hotel.address}</span></div>
+                <div className="flex items-start gap-1.5 text-muted-foreground"><MapPin className="h-3 w-3 mt-0.5 shrink-0" /><span className="text-[10px] leading-tight">{formatAddress(service.hotel.address)}</span></div>
                 <div className="flex items-center justify-between pt-1 text-[10px] border-t">
                   <span className="text-muted-foreground">Verification</span>
                   <span className="font-bold text-amber-600 capitalize">{service.hotel.verificationStatus}</span>
