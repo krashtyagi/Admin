@@ -84,6 +84,9 @@ export function BlogEditor({ initialPost, isEdit = false }: BlogEditorProps) {
   const [canonicalUrl, setCanonicalUrl] = useState(
     initialPost?.seo?.canonicalUrl || ""
   );
+  const [robotsIndex, setRobotsIndex] = useState<boolean>(
+    initialPost?.seo?.robotsIndex !== false
+  );
 
   // Preview tab & SERP device toggle
   const [activeTab, setActiveTab] = useState<"write" | "preview">("write");
@@ -199,6 +202,8 @@ export function BlogEditor({ initialPost, isEdit = false }: BlogEditorProps) {
         ogTitle: metaTitle.trim() || title.trim(),
         ogDescription: metaDescription.trim() || excerpt.trim(),
         ogImage: featuredImage.trim(),
+        robotsIndex,
+        robotsFollow: robotsIndex,
       },
     };
 
@@ -712,6 +717,26 @@ export function BlogEditor({ initialPost, isEdit = false }: BlogEditorProps) {
                   onChange={(e) => setCanonicalUrl(e.target.value)}
                   className="w-full px-3 py-1.5 text-xs font-mono rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
+              </div>
+
+              {/* Search Engine Indexing (noindex) */}
+              <div className="pt-2 border-t border-border/60">
+                <label className="flex items-start gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={robotsIndex}
+                    onChange={(e) => setRobotsIndex(e.target.checked)}
+                    className="mt-0.5 rounded border-border text-primary focus:ring-primary/20"
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-xs font-semibold text-foreground">
+                      Index in Google & Search Engines
+                    </span>
+                    <span className="text-[11px] text-muted-foreground leading-snug">
+                      Uncheck to set <code className="bg-muted px-1 py-0.5 rounded text-[10px]">noindex</code> (keeps article accessible on site, but hides it from Google and removes it from sitemap).
+                    </span>
+                  </div>
+                </label>
               </div>
             </div>
           </div>
