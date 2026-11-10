@@ -17,6 +17,7 @@ import {
   getDeletedProperties,
   cleanAllDeletedProperties,
   deleteDeletedPropertyRecord,
+  updatePropertyImages,
 } from "./dash.service";
 
 export const usePropertyDetails = (id: string, propertyId?: string) => {
@@ -216,6 +217,32 @@ export const useDeleteDeletedPropertyRecord = () => {
     mutationFn: (id: string) => deleteDeletedPropertyRecord(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["deleted_properties"] });
+    },
+  });
+};
+
+export const useUpdatePropertyImages = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      images,
+      serviceType,
+      propertyId,
+    }: {
+      id: string;
+      images: any[];
+      serviceType?: string;
+      propertyId?: string;
+    }) => updatePropertyImages(id, { images, serviceType, propertyId }),
+    onSuccess: (_, { id, propertyId }) => {
+      queryClient.invalidateQueries({
+        queryKey: ["admin_property_details", id, propertyId || ""],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["admin_property_details", id],
+      });
+      queryClient.invalidateQueries({ queryKey: ["property"] });
     },
   });
 };

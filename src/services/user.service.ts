@@ -1,79 +1,49 @@
-// import { axiosApi } from "@/lib/axios";
-
-// export const currentUser = async () => {
-//   const token = localStorage.getItem(
-//     (process.env.ADMIN_ACCESS_TOKEN as string) ||
-//       "__%^&__@@a%d^m^i*nt%%oken%__",
-//   );
-
-//   if (!token) {
-//     throw new Error("No access token found");
-//   }
-
-//   try {
-//     const res = await axiosApi.get("/users/me", {
-//       headers: {
-//         Authorization: `Bearer ${token}`,
-//       },
-//     });
-
-//     return res.data;
-//   } catch (error) {
-//     console.error("currentUser service - API call failed:", error);
-//     throw error;
-//   }
-// };
 import { axiosApi } from "@/lib/axios";
+import { getSession } from "@/lib/auth-client";
 import { adminAccessToken } from "./auth";
 
-const isTokenExpired = (token: string): boolean => {
-  if (!token) return true;
-  try {
-    const parts = token.split(".");
-    if (parts.length !== 3) return true;
-    const base64Url = parts[1];
-    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-    const jsonPayload = decodeURIComponent(
-      window
-        .atob(base64)
-        .split("")
-        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-        .join(""),
-    );
-    const payload = JSON.parse(jsonPayload);
-    if (!payload.exp) return false;
-    return payload.exp < Date.now() / 1000;
-  } catch (error) {
-    return true;
-  }
-};
+export const ADMIN_ROLES = [
+  "admin",
+  "super_admin",
+  "blog_author",
+  "blog_editor",
+  "seo_manager",
+  "reviewer",
+];
 
 export const currentUser = async () => {
-  const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem(adminAccessToken)
-      : null;
-
-  if (!token) {
-    throw new Error("No access token found");
-  }
-
-  if (typeof window !== "undefined" && isTokenExpired(token)) {
-    localStorage.removeItem(adminAccessToken);
-    window.location.reload();
-    throw new Error("Access token expired");
-  }
-
   try {
-    const res = await axiosApi.get("/users/me", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem(adminAccessToken)
+        : null;
+
+    // Admin portal MUST require intentional admin login (adminAccessToken in localStorage)
+    if (!token) {
+      return null;
+    }
+
+    const session = await getSession();
+    if (!session?.data?.user && !token) {
+      return null;
+    }
+
+    const res = await axiosApi.get("/users/me");
+    const userRole = res.data?.data?.role || res.data?.role;
+
+    // Reject non-admin users (e.g. regular customers logged in on frontend)
+    if (!userRole || !ADMIN_ROLES.includes(userRole)) {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(adminAccessToken);
+      }
+      return null;
+    }
 
     return res.data;
   } catch (error) {
-    console.error("currentUser service - API call failed:", error);
-    throw error;
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(adminAccessToken);
+    }
+    return null;
   }
 };

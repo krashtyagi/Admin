@@ -7,24 +7,38 @@ import { useAuthStore } from "@/stores/auth.store";
 import { PageSkeleton } from "@/components/loaders/loader/skeleton";
 import { adminAccessToken } from "@/services/auth";
 
-export default function Home() {
-  const { data, isLoading } = useCurrentUser();
+import { ADMIN_ROLES } from "@/services/user.service";
 
-  const router = useRouter()
-  const { setCurrStep } = useAuthStore()
+export default function Home() {
+  const { data, isLoading, isFetching, refetch } = useCurrentUser();
+  const router = useRouter();
+
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem(adminAccessToken)
+      : null;
+  const user = data?.data;
+  const role = user?.role;
 
   useEffect(() => {
-    if (data) {
-      if (localStorage.getItem("status") === "draft") {
-        setCurrStep(data?.data?.vendor.currentStep)
-        router.replace("/signup/process")
-      } else {
-        router.replace("/dashboard")
-      }
-    } else if (localStorage.getItem(adminAccessToken) === null) {
-      router.replace("/login")
+    if (token && !user && !isLoading && !isFetching) {
+      refetch();
     }
-  }, [data])
+  }, [token, user, isLoading, isFetching, refetch]);
+
+  useEffect(() => {
+    if (isLoading || isFetching) return;
+
+    if (token && user && ADMIN_ROLES.includes(role)) {
+      if (role === "admin" || role === "super_admin") {
+        router.replace("/dashboard");
+      } else {
+        router.replace("/blog");
+      }
+    } else if (!token || (!isFetching && !user)) {
+      router.replace("/login");
+    }
+  }, [data, isLoading, isFetching, token, role, user, router]);
   const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {

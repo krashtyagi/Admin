@@ -8,6 +8,9 @@ export const singleUser = (id:string)=>{
     const res = axiosApi.get(`/admin/users/${id}/bookings` )
     return res
 }
+export const getUserProfile = (id: string) => {
+    return axiosApi.get(`/admin/users/${id}`);
+};
 export const getDestination = ({id , booking}:{
     id:string, booking:string
 })=>{

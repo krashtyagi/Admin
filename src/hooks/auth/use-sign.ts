@@ -6,13 +6,16 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useAuthStore } from "@/stores/auth.store";
 import { useCurrentUser } from "@/services/queryes";
+import { useQueryClient } from "@tanstack/react-query";
 import { LoginFormProps, LoginScshema } from "@/schema/user";
 
 export const useLogin = () => {
   const [loading, setLoading] = React.useState<boolean>(false);
-  const navigate = useRouter();
+  const router = useRouter();
   const { userLogin } = useAuthStore();
   const { refetch } = useCurrentUser();
+  const queryClient = useQueryClient();
+
   const methods = useForm<LoginFormProps>({
     resolver: zodResolver(LoginScshema),
     defaultValues: {
@@ -21,7 +24,7 @@ export const useLogin = () => {
     },
     mode: "onChange",
   });
-  const router = useRouter();
+
   const onHandleSubmit = methods.handleSubmit(async (data) => {
     setLoading(true);
 
@@ -30,16 +33,21 @@ export const useLogin = () => {
       if (result.success) {
         toast.success(result.message || "Login successful!");
 
+        // Update React Query cache immediately so layout guards don't see null/stale user
+        queryClient.setQueryData(["current_user"], { data: result.user });
+        await queryClient.invalidateQueries({ queryKey: ["current_user"] });
+        await refetch();
+
         const role = result.user?.role;
-        if (
+        const targetUrl =
           role === "blog_author" ||
           role === "blog_editor" ||
           role === "seo_manager"
-        ) {
-          router.push("/blog");
-        } else {
-          router.push("/dashboard");
-        }
+            ? "/blog"
+            : "/dashboard";
+
+        // Full navigation to ensure complete session hydration and zero race conditions
+        window.location.href = targetUrl;
       } else {
         toast.error(result.message || "Login failed");
       }

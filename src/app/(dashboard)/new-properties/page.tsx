@@ -180,9 +180,7 @@ export default function NewPropertiesPage() {
             <option value="hotel">Hotels</option>
             <option value="tour">Tours</option>
           </select>
-          <span className="text-sm text-muted-foreground">
-            {total} pending
-          </span>
+          <span className="text-sm text-muted-foreground">{total} pending</span>
         </div>
       </div>
 

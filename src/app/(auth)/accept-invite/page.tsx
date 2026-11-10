@@ -6,6 +6,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { blogService } from "@/services/blog.service";
 import { adminAccessToken } from "@/services/auth";
+import { authClient } from "@/lib/auth-client";
 import LOGO from "@/components/logo/logo";
 import {
   ShieldCheck,
@@ -76,6 +77,15 @@ function AcceptInviteContent() {
 
       if (res?.token) {
         localStorage.setItem(adminAccessToken, res.token);
+      }
+
+      if (password) {
+        try {
+          await authClient.signIn.email({
+            email: inviteData.email,
+            password,
+          });
+        } catch (e) {}
       }
 
       toast.success(

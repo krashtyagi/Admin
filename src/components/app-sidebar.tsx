@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 
-import { NavMain, NavItem, NavSection } from "@/components/nav-main"
-import { NavUser } from "@/components/nav-user"
+import { NavMain, NavItem, NavSection } from "@/components/nav-main";
+import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,
   SidebarContent,
@@ -13,7 +13,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 import {
   LayoutDashboardIcon,
   ListIcon,
@@ -29,10 +29,10 @@ import {
   BookOpen,
   Layers,
   ShieldCheck,
-} from "lucide-react"
-import LOGO from "./logo/logo"
-import { usePathname, useRouter } from "next/navigation"
-import { useCurrentUser } from "@/services/queryes"
+} from "lucide-react";
+import LOGO from "./logo/logo";
+import { usePathname, useRouter } from "next/navigation";
+import { useCurrentUser } from "@/services/queryes";
 
 const adminNavItems: NavItem[] = [
   {
@@ -44,6 +44,11 @@ const adminNavItems: NavItem[] = [
     title: "Users",
     url: "/users",
     icon: <UsersIcon />,
+  },
+  {
+    title: "Device Sessions",
+    url: "/sessions",
+    icon: <ShieldCheck />,
   },
   {
     title: "Properties",
@@ -90,7 +95,7 @@ const adminNavItems: NavItem[] = [
     url: "/settings",
     icon: <Settings2Icon />,
   },
-]
+];
 
 const marketNavItems: NavItem[] = [
   {
@@ -108,24 +113,32 @@ const marketNavItems: NavItem[] = [
     url: "/writers",
     icon: <ShieldCheck />,
   },
-]
+];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const router = useRouter()
-  const pathname = usePathname()
-  const { isMobile, setOpenMobile } = useSidebar()
-  const { data: userRes } = useCurrentUser()
+  const router = useRouter();
+  const pathname = usePathname();
+  const { isMobile, setOpenMobile } = useSidebar();
+  const { data: userRes } = useCurrentUser();
 
-  const role = userRes?.data?.role
+  const role = userRes?.data?.role;
   // Only admin and super_admin can see the Admin section
-  const isAdmin = role === "admin" || role === "super_admin"
+  const isAdmin = role === "admin" || role === "super_admin";
 
-  // Close sidebar on mobile navigation
+  // Close sidebar only on mobile navigation (pathname change)
+  const prevPathname = React.useRef(pathname);
   React.useEffect(() => {
-    if (isMobile) {
-      setOpenMobile(false)
+    if (prevPathname.current !== pathname) {
+      prevPathname.current = pathname;
+      if (isMobile) {
+        setOpenMobile(false);
+      }
     }
-  }, [pathname, isMobile, setOpenMobile])
+  }, [pathname, isMobile, setOpenMobile]);
+
+  const marketItems = isAdmin
+    ? marketNavItems
+    : marketNavItems.filter((item) => item.url !== "/writers");
 
   const sections: NavSection[] = isAdmin
     ? [
@@ -135,23 +148,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         },
         {
           title: "Market",
-          items: marketNavItems,
+          items: marketItems,
         },
       ]
     : [
         {
           title: "Market",
-          items: marketNavItems,
+          items: marketItems,
         },
-      ]
+      ];
 
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarHeader>
+    <Sidebar collapsible="icon" {...props}>
+      <SidebarHeader className="group-data-[collapsible=icon]:p-1.5 transition-all">
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton className="data-[slot=sidebar-menu-button]:p-1.5!">
-              <LOGO className="w-20" />
+          <SidebarMenuItem className="flex items-center group-data-[collapsible=icon]:justify-center">
+            <SidebarMenuButton asChild className="h-10 hover:bg-transparent group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:justify-center">
+              <LOGO />
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -163,5 +176,5 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavUser />
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }

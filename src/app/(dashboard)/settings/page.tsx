@@ -1,14 +1,5 @@
-import React from 'react'
-import AdminSettingsPage from './_components/main-settings_page'
+import { redirect } from "next/navigation";
 
-type Props = {}
-
-const page = (props: Props) => {
-  return (
-    <div>
-      <AdminSettingsPage />
-    </div>
-  )
+export default function SettingsRootPage() {
+  redirect("/settings/business/preference/destinations");
 }
-
-export default page 
